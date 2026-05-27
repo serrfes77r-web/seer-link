@@ -4946,7 +4946,8 @@
                 const actMax = Math.max(replyMinDelayMs, replyMaxDelayMs);
                 const delay = actMin + Math.random() * (actMax - actMin);
                 await new Promise(r => setTimeout(r, delay));
-                           
+                showTypingIndicator(false);           
+                
                 for (const member of selectedMembers) {
                     const isPat = patList.length > 0 && Math.random() < 0.03;
                     if (isPat) {
@@ -5047,7 +5048,7 @@
                         await new Promise(r => setTimeout(r, replyInterMessageDelayMs));
                     }
                 }
-                showTypingIndicator(false);
+                
                 isTyping = false;
             }
 
@@ -5068,7 +5069,8 @@
                 const actMax = Math.max(replyMinDelayMs, replyMaxDelayMs);
                 const delay = actMin + Math.random() * (actMax - actMin);
                 await new Promise(r => setTimeout(r, delay));
-           
+                showTypingIndicator(false);
+                
                 const wcc = getWeightedReplyCount();
                 let useQuote = null;
                 if (mengQuoteEnabled) {
@@ -5141,7 +5143,7 @@
                         }
                     }
                 }
-                showTypingIndicator(false);
+                
                 isTyping = false;
             }
 
@@ -5247,7 +5249,7 @@
                 } 
             }
             
-            function sendMyMessage() { const inp = document.getElementById('messageInput'); const text = inp.value.trim(); if (!text)
+            function sendMyMessage() { saveLastActiveTime(); const inp = document.getElementById('messageInput'); const text = inp.value.trim(); if (!text)
                     return; const quote = currentQuoteMsg;
                 addMessage('me', text, 'text', quote);
                 playSound('me');
@@ -6036,7 +6038,9 @@
                         openMomentsPanel();
                         setTimeout(() => {
                             const modal = document.getElementById('momentsModal');
-                            const cmt = modal?.querySelector(`.moment-card[data-moment-id="${momentId}"] .comment-item[data-comment-id="${commentId}"]`);
+                            const cmt = Array.from(modal?.querySelectorAll('.comment-item') || []).find(el => 
+                                el.querySelector('.comment-delete-btn')?.dataset.commentId === commentId
+                            );
                             if (cmt) {
                                 cmt.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                 highlightComment(cmt);
@@ -6048,7 +6052,9 @@
                 openMomentsPanel();
                 setTimeout(() => {
                     const modal = document.getElementById('momentsModal');
-                    const cmt = modal?.querySelector(`.moment-card[data-moment-id="${momentId}"] .comment-item[data-comment-id="${commentId}"]`);
+                    const cmt = Array.from(modal?.querySelectorAll('.comment-item') || []).find(el => 
+                        el.querySelector('.comment-delete-btn')?.dataset.commentId === commentId
+                    );
                     if (cmt) {
                         cmt.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         highlightComment(cmt);
@@ -7163,7 +7169,7 @@
                 modalDiv.className = 'modal';
                 modalDiv.id = 'managePanelModal';
                 modalDiv.innerHTML =
-                    `<div class="modal-content" style="max-width:580px;padding:12px 16px;"><div class="settings-title" style="margin-bottom:12px;"><i class="fa-solid fa-gear"></i> 设置管理</div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-user"></i> 基础信息</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:8px;"><span>我的昵称</span><input type="text" id="nickMyInput" value="${escapeHtml(profile.myNick)}" style="width:60%;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"></div><div class="flex-between"><span>Ta的昵称</span><input type="text" id="nickMengInput" value="${escapeHtml(profile.mengNick)}" style="width:60%;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"></div><button class="sec-btn" id="saveNicknamesBtn" style="margin-top:10px;width:100%;">保存昵称</button><div class="data-note" style="margin-top:4px;">💡 点击顶部头像可更换头像</div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-palette"></i> 外观</div><div class="manage-fold-body"><div style="margin-bottom:6px;font-weight:500;">🖼️ 聊天背景更换</div><input type="file" id="bgUploadInput" accept="image/jpeg" style="margin-bottom:10px;"><div class="button-group"><button class="sec-btn" id="applyBgBtn">应用背景</button><button class="sec-btn sec-btn-outline" id="resetBgBtn">恢复默认</button></div><div style="margin-top:14px;margin-bottom:6px;font-weight:500;">🫧 气泡CSS</div><textarea id="bubbleCssTextarea" class="textarea-clean" rows="10"></textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="applyBubbleCss">应用</button><button class="sec-btn sec-btn-outline" id="resetBubbleCss">恢复</button><button class="sec-btn sec-btn-outline" id="loadExampleCssBtn">示例</button></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-folder-open"></i> 内容库</div><div class="manage-fold-body"><div style="margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="font-weight:500;">💬 字卡</span><button class="small-btn primary-outline" id="importGlobalAutoBtn" style="padding:3px 10px;font-size:11px;line-height:1;"><i class="fa-solid fa-file-import"></i> 导入</button><button class="small-btn primary-outline" id="exportGlobalTxtBtn" style="padding:3px 10px;font-size:11px;line-height:1;"><i class="fa-solid fa-file-export"></i> 导出</button><button class="small-btn primary-outline" id="openSmartWordBtn" style="margin-left: auto;"><i class="fa-solid fa-brain"></i> 智能管理</button><input type="file" id="globalImportFileInput" accept=".txt,.json" style="display:none;"></div><div id="wordCountDisplay" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📝 当前 ${wordCardList.length} 条</div><textarea id="wordTextarea" class="textarea-clean" rows="10">${wordCardList.join('\n')}</textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="batchAddWord">保存</button><button class="sec-btn sec-btn-outline" id="delAllWord">清空</button></div><div class="content-library-toggle-row"><span>😊 表情</span><label class="toggle-switch" style="width:44px;height:22px;"><input type="checkbox" id="emojiDisabledToggle" ${emojiDisabled?'':'checked'}><span class="slider" style="width:44px;height:22px;"></span></label></div><textarea id="emojiTextarea" class="textarea-clean" rows="10">${emojiCardList.join('\n')}</textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="batchAddEmoji">保存</button><button class="sec-btn sec-btn-outline" id="delAllEmoji">清空</button></div><div class="content-library-toggle-row"><span>🖼️ 图片</span><label class="toggle-switch" style="width:44px;height:22px;"><input type="checkbox" id="imgDisabledToggle" ${imgDisabled?'':'checked'}><span class="slider" style="width:44px;height:22px;"></span></label></div><input type="file" id="uploadImages" multiple accept="image/*" style="margin-bottom:8px;"><div id="imgPreviewList" class="img-grid-fixed"></div><div class="button-group" style="flex-direction:column;gap:6px;"><button class="sec-btn sec-btn-outline" id="deleteSelectedImg" style="width:100%;">删除选中</button><button class="sec-btn sec-btn-outline" id="clearAllImgBtn" style="width:100%;">全部清空</button></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-sliders"></i> 回复策略</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:10px;"><span>已读不回</span><label class="toggle-switch"><input type="checkbox" id="mengIgnoreToggle" ${mengMaybeIgnore?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>主动发消息</span><label class="toggle-switch"><input type="checkbox" id="mengActiveTalkToggle" ${mengActiveTalkEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>引用回复</span><label class="toggle-switch"><input type="checkbox" id="mengQuoteToggle" ${mengQuoteEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>显示消息时间</span><label class="toggle-switch"><input type="checkbox" id="showTimeToggle" ${showMessageTimeEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>组合回复</span><label class="toggle-switch"><input type="checkbox" id="combineRepliesToggle" ${combineRepliesEnabled?'checked':''}><span class="slider"></span></label></div><div class="data-note" style="margin-bottom:10px;">💡 开启后多条字卡回复将合并为一条消息，减少消息刷屏</div><div style="margin-bottom:10px;"><span>⏱️ 最短等待：</span><strong id="replyMinSpeedValue">${Math.round(replyMinDelayMs/1000)}</strong>秒</div><input type="range" id="replyMinSpeedSlider" min="1" max="180" value="${Math.round(replyMinDelayMs/1000)}" style="width:100%;"><div class="data-note" style="margin-top:2px;">💡 实际回复时间将在最短～最长之间随机</div><div style="margin-bottom:10px;"><span>⏱️ 最大等待：</span><strong id="replySpeedValue">${Math.round(replyMaxDelayMs/1000)}</strong>秒</div><input type="range" id="replySpeedSlider" min="3" max="180" value="${Math.round(replyMaxDelayMs/1000)}" style="width:100%;"><div style="margin-top:10px;"><span>⏳ 消息间隔：</span><strong id="interDelayValue">${(replyInterMessageDelayMs/1000).toFixed(1)}</strong>秒</div><input type="range" id="interDelaySlider" min="0" max="7" step="0.5" value="${(replyInterMessageDelayMs/1000).toFixed(1)}" style="width:100%;"></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-bell"></i> 消息设置</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:10px;"><span>推送通知</span><label class="toggle-switch"><input type="checkbox" id="notificationToggle" ${notificationEnabled?'checked':''}><span class="slider"></span></label></div><button class="sec-btn sec-btn-outline" id="requestNotifPermBtn" style="width:100%;margin-bottom:12px;">请求通知权限</button><div style="margin-bottom:12px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="flex-shrink:0;">我的提示音</span><input type="file" id="mySoundUpload" accept="audio/mpeg" style="flex:1;"><button class="small-btn" id="clearMySound">清除</button></div><div style="display:flex; align-items:center; gap:8px;"><span style="flex-shrink:0; width:70px;">外链地址</span><input type="text" id="mySoundUrlInput" placeholder="https://...mp3" style="flex:1; background:var(--bg-body); border:1px solid var(--border-light); border-radius:20px; padding:6px 12px;"><button class="small-btn" id="applyMySoundUrl">应用外链</button><button class="small-btn" id="testMySound" title="试听">🎧 试听</button></div></div><div style="margin-bottom:12px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="flex-shrink:0;">Ta的提示音</span><input type="file" id="mengSoundUpload" accept="audio/mpeg" style="flex:1;"><button class="small-btn" id="clearMengSound">清除</button></div><div style="display:flex; align-items:center; gap:8px;"><span style="flex-shrink:0; width:70px;">外链地址</span><input type="text" id="mengSoundUrlInput" placeholder="https://...mp3" style="flex:1; background:var(--bg-body); border:1px solid var(--border-light); border-radius:20px; padding:6px 12px;"><button class="small-btn" id="applyMengSoundUrl">应用外链</button><button class="small-btn" id="testMengSound" title="试听">🎧 试听</button></div></div><div class="data-note" style="margin-top:4px;">支持上传本地 MP3(小于1MB) 或使用外链地址（http/https）</div></div></div><div class="manage-fold" id="momentsManageFold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-globe"></i> 朋友圈管理</div><div class="manage-fold-body"><div style="margin-bottom:20px;"><div style="font-weight:600;margin-bottom:8px;">📅 生成时间与条数</div><div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><label>开始时间：</label><input type="time" id="momentsTimeStartInput" value="${momentsTimeStart}" style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"><label style="margin-left:12px;">结束时间：</label><input type="time" id="momentsTimeEndInput" value="${momentsTimeEnd}" style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"></div><div class="data-note" style="margin-bottom:12px;">💡 设置每天允许发朋友圈的时间段（在此范围内随机分布）。若开始时间晚于结束时间，视为跨夜。</div><div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><label>每人最少条数：</label><input type="number" id="momentsCountMinInput" min="1" max="10" value="${momentsCountMin}" style="width:70px;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"><label style="margin-left:12px;">最多条数：</label><input type="number" id="momentsCountMaxInput" min="1" max="10" value="${momentsCountMax}" style="width:70px;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"></div><div class="data-note" style="margin-bottom:6px;">💡 每个成员（包括Ta）每天随机发送的条数范围。</div><button class="sec-btn" id="saveMomentsScheduleBtn" style="width:100%;">保存并立即生效</button></div><hr style="margin:12px 0;"><div style="margin-bottom:20px;"><div style="font-weight:600;margin-bottom:8px;">💬 评论速度</div><div style="margin-bottom:12px;font-weight:500;font-size:13px;">初始评论（动态发布后）</div><div style="margin-bottom:8px;"><span>最快间隔：</span><strong id="icMinValue">${initialCommentIntervalMin}</strong> 秒<input type="range" id="icMinSlider" min="1" max="180" value="${initialCommentIntervalMin}" style="width:100%;"></div><div style="margin-bottom:8px;"><span>最慢间隔：</span><strong id="icMaxValue">${initialCommentIntervalMax}</strong> 秒<input type="range" id="icMaxSlider" min="1" max="180" value="${initialCommentIntervalMax}" style="width:100%;"></div><hr style="margin:12px 0;"><div style="margin-bottom:12px;font-weight:500;font-size:13px;">回复速度（你评论后Ta的回复）</div><div style="margin-bottom:8px;"><span>最小延迟：</span><strong id="replyMinValue">${momentsCommentDelayMin}</strong> 秒<input type="range" id="replyMinSlider" min="1" max="180" value="${momentsCommentDelayMin}" style="width:100%;"></div><div style="margin-bottom:8px;"><span>最大延迟：</span><strong id="replyMaxValue">${momentsCommentDelayMax}</strong> 秒<input type="range" id="replyMaxSlider" min="1" max="180" value="${momentsCommentDelayMax}" style="width:100%;"></div><div class="data-note">💡 初始评论会在发布后陆续出现，对回复速度的修改立即生效。</div></div><hr style="margin:12px 0;"><div><div style="font-weight:600;margin-bottom:8px;">📍 地点管理</div><div id="momentLocationsManager" style="max-height:180px;overflow-y:auto;margin-bottom:10px;"></div><div style="display:flex;gap:6px;"><input type="text" id="newLocationInput" placeholder="新地点名称" style="flex:1;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"><button class="small-btn primary-outline" id="addLocationBtn"><i class="fa-solid fa-plus"></i> 添加</button></div><div class="data-note" style="margin-top:6px;">💡 修改后立即生效，新动态将随机使用列表中的地点</div></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-database"></i> 数据</div><div class="manage-fold-body"><div class="button-group"><button class="sec-btn" id="exportDataBtn"><i class="fa-solid fa-file-export"></i> 导出备份</button><button class="sec-btn sec-btn-outline" id="importDataBtn"><i class="fa-solid fa-file-import"></i> 导入备份</button><button class="sec-btn sec-btn-outline" id="viewStorageBtn"><i class="fa-solid fa-hard-drive"></i> 查看储存</button><button class="sec-btn sec-btn-outline" id="resetAllDataBtn" style="background: var(--danger-bg); color: var(--danger-color);"><i class="fa-solid fa-skull-crossbones"></i> 重置所有数据</button></div></div></div><button class="sec-btn" id="closeManage" style="margin-top:12px;width:100%;">关闭</button></div>`;
+                    `<div class="modal-content" style="max-width:580px;padding:12px 16px;"><div class="settings-title" style="margin-bottom:12px;"><i class="fa-solid fa-gear"></i> 设置管理</div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-user"></i> 基础信息</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:8px;"><span>我的昵称</span><input type="text" id="nickMyInput" value="${escapeHtml(profile.myNick)}" style="width:60%;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"></div><div class="flex-between"><span>Ta的昵称</span><input type="text" id="nickMengInput" value="${escapeHtml(profile.mengNick)}" style="width:60%;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"></div><button class="sec-btn" id="saveNicknamesBtn" style="margin-top:10px;width:100%;">保存昵称</button><div class="data-note" style="margin-top:4px;">💡 点击顶部头像可更换头像</div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-palette"></i> 外观</div><div class="manage-fold-body"><div style="margin-bottom:6px;font-weight:500;">🖼️ 聊天背景更换</div><input type="file" id="bgUploadInput" accept="image/jpeg" style="margin-bottom:10px;"><div class="button-group"><button class="sec-btn" id="applyBgBtn">应用背景</button><button class="sec-btn sec-btn-outline" id="resetBgBtn">恢复默认</button></div><div style="margin-top:14px;margin-bottom:6px;font-weight:500;">🫧 气泡CSS</div><textarea id="bubbleCssTextarea" class="textarea-clean" rows="10"></textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="applyBubbleCss">应用</button><button class="sec-btn sec-btn-outline" id="resetBubbleCss">恢复</button><button class="sec-btn sec-btn-outline" id="loadExampleCssBtn">示例</button></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-folder-open"></i> 内容库</div><div class="manage-fold-body"><div style="margin-bottom:8px;display:flex;align-items:center;gap:6px;"><span style="font-weight:500;">💬 字卡</span><button class="small-btn primary-outline" id="importGlobalAutoBtn" style="padding:3px 10px;font-size:11px;line-height:1;"><i class="fa-solid fa-file-import"></i> 导入</button><button class="small-btn primary-outline" id="exportGlobalTxtBtn" style="padding:3px 10px;font-size:11px;line-height:1;"><i class="fa-solid fa-file-export"></i> 导出</button><button class="small-btn primary-outline" id="openSmartWordBtn" style="margin-left: auto;"><i class="fa-solid fa-brain"></i> 智能管理</button><input type="file" id="globalImportFileInput" accept=".txt,.json" style="display:none;"></div><div id="wordCountDisplay" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;">📝 当前 ${wordCardList.length} 条</div><textarea id="wordTextarea" class="textarea-clean" rows="10">${wordCardList.join('\n')}</textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="batchAddWord">保存</button><button class="sec-btn sec-btn-outline" id="delAllWord">清空</button></div><div class="content-library-toggle-row"><span>😊 表情</span><label class="toggle-switch" style="width:44px;height:22px;"><input type="checkbox" id="emojiDisabledToggle" ${emojiDisabled?'':'checked'}><span class="slider" style="width:44px;height:22px;"></span></label></div><textarea id="emojiTextarea" class="textarea-clean" rows="10">${emojiCardList.join('\n')}</textarea><div class="button-group" style="margin-top:6px;"><button class="sec-btn" id="batchAddEmoji">保存</button><button class="sec-btn sec-btn-outline" id="delAllEmoji">清空</button></div><div class="content-library-toggle-row"><span>🖼️ 图片</span><label class="toggle-switch" style="width:44px;height:22px;"><input type="checkbox" id="imgDisabledToggle" ${imgDisabled?'':'checked'}><span class="slider" style="width:44px;height:22px;"></span></label></div><input type="file" id="uploadImages" multiple accept="image/*" style="margin-bottom:8px;"><div id="imgPreviewList" class="img-grid-fixed"></div><div class="button-group" style="flex-direction:column;gap:6px;"><button class="sec-btn sec-btn-outline" id="deleteSelectedImg" style="width:100%;">删除选中</button><button class="sec-btn sec-btn-outline" id="clearAllImgBtn" style="width:100%;">全部清空</button></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-sliders"></i> 回复策略</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:10px;"><span>已读不回</span><label class="toggle-switch"><input type="checkbox" id="mengIgnoreToggle" ${mengMaybeIgnore?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>主动发消息</span><label class="toggle-switch"><input type="checkbox" id="mengActiveTalkToggle" ${mengActiveTalkEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>引用回复</span><label class="toggle-switch"><input type="checkbox" id="mengQuoteToggle" ${mengQuoteEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>显示消息时间</span><label class="toggle-switch"><input type="checkbox" id="showTimeToggle" ${showMessageTimeEnabled?'checked':''}><span class="slider"></span></label></div><div class="flex-between" style="margin-bottom:10px;"><span>组合回复</span><label class="toggle-switch"><input type="checkbox" id="combineRepliesToggle" ${combineRepliesEnabled?'checked':''}><span class="slider"></span></label></div><div class="data-note" style="margin-bottom:10px;">💡 开启后多条字卡回复将合并为一条消息，减少消息刷屏</div><div style="margin-bottom:10px;"><span>⏱️ 最短等待：</span><strong id="replyMinSpeedValue">${Math.round(replyMinDelayMs/1000)}</strong>秒</div><input type="range" id="replyMinSpeedSlider" min="1" max="180" value="${Math.round(replyMinDelayMs/1000)}" style="width:100%;"><div class="data-note" style="margin-top:2px;">💡 实际回复时间将在最短～最长之间随机</div><div style="margin-bottom:10px;"><span>⏱️ 最大等待：</span><strong id="replySpeedValue">${Math.round(replyMaxDelayMs/1000)}</strong>秒</div><input type="range" id="replySpeedSlider" min="3" max="180" value="${Math.round(replyMaxDelayMs/1000)}" style="width:100%;"><div style="margin-top:10px;"><span>⏳ 消息间隔：</span><strong id="interDelayValue">${(replyInterMessageDelayMs/1000).toFixed(1)}</strong>秒</div><input type="range" id="interDelaySlider" min="0" max="7" step="0.5" value="${(replyInterMessageDelayMs/1000).toFixed(1)}" style="width:100%;"></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-bell"></i> 消息设置</div><div class="manage-fold-body"><div class="flex-between" style="margin-bottom:10px;"><span>推送通知</span><label class="toggle-switch"><input type="checkbox" id="notificationToggle" ${notificationEnabled?'checked':''}><span class="slider"></span></label></div><button class="sec-btn sec-btn-outline" id="requestNotifPermBtn" style="width:100%;margin-bottom:12px;">请求通知权限</button><div style="margin-bottom:12px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="flex-shrink:0;">我的提示音</span><input type="file" id="mySoundUpload" accept="audio/mpeg" style="flex:1;"><button class="small-btn" id="clearMySound">清除</button></div><div style="display:flex; align-items:center; gap:8px;"><span style="flex-shrink:0; width:70px;">外链地址</span><input type="text" id="mySoundUrlInput" placeholder="https://...mp3" style="flex:1; background:var(--bg-body); border:1px solid var(--border-light); border-radius:20px; padding:6px 12px;"><button class="small-btn" id="applyMySoundUrl">应用外链</button><button class="small-btn" id="testMySound" title="试听">🎧 试听</button></div></div><div style="margin-bottom:12px;"><div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;"><span style="flex-shrink:0;">Ta的提示音</span><input type="file" id="mengSoundUpload" accept="audio/mpeg" style="flex:1;"><button class="small-btn" id="clearMengSound">清除</button></div><div style="display:flex; align-items:center; gap:8px;"><span style="flex-shrink:0; width:70px;">外链地址</span><input type="text" id="mengSoundUrlInput" placeholder="https://...mp3" style="flex:1; background:var(--bg-body); border:1px solid var(--border-light); border-radius:20px; padding:6px 12px;"><button class="small-btn" id="applyMengSoundUrl">应用外链</button><button class="small-btn" id="testMengSound" title="试听">🎧 试听</button></div></div><div class="data-note" style="margin-top:4px;">支持上传本地 MP3(小于1MB) 或使用外链地址（http/https）</div></div></div><div class="manage-fold" id="momentsManageFold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-globe"></i> 朋友圈管理</div><div class="manage-fold-body"><div style="margin-bottom:20px;"><div style="font-weight:600;margin-bottom:8px;">📅 生成时间与条数</div><div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><label>开始时间：</label><input type="time" id="momentsTimeStartInput" value="${momentsTimeStart}" style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"><label style="margin-left:12px;">结束时间：</label><input type="time" id="momentsTimeEndInput" value="${momentsTimeEnd}" style="background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"></div><div class="data-note" style="margin-bottom:12px;">💡 设置每天允许发朋友圈的时间段（在此范围内随机分布）。若开始时间晚于结束时间，视为跨夜。</div><div style="display:flex;gap:10px;align-items:center;margin-bottom:8px;"><label>每人最少条数：</label><input type="number" id="momentsCountMinInput" min="1" max="10" value="${momentsCountMin}" style="width:70px;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"><label style="margin-left:12px;">最多条数：</label><input type="number" id="momentsCountMaxInput" min="1" max="10" value="${momentsCountMax}" style="width:70px;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px;"></div><div class="data-note" style="margin-bottom:6px;">💡 每个成员（包括Ta）每天随机发送的条数范围。</div><button class="sec-btn" id="saveMomentsScheduleBtn" style="width:100%;">保存并立即生效</button></div><hr style="margin:12px 0;"><div style="margin-bottom:20px;"><div style="font-weight:600;margin-bottom:8px;">💬 评论速度</div><div style="margin-bottom:12px;font-weight:500;font-size:13px;">初始评论（动态发布后）</div><div style="margin-bottom:8px; display: flex; align-items: center; gap: 8px;"><span>最快间隔（秒）：</span><input type="number" id="icMinInput" class="msg-input" value="${initialCommentIntervalMin}" step="1" style="width: 100px;"><span>秒</span></div><div style="margin-bottom:8px; display: flex; align-items: center; gap: 8px;"><span>最慢间隔（秒）：</span><input type="number" id="icMaxInput" class="msg-input" value="${initialCommentIntervalMax}" step="1" style="width: 100px;"><span>秒</span></div><hr style="margin:12px 0;"><div style="margin-bottom:12px;font-weight:500;font-size:13px;">回复速度（你评论后Ta的回复）</div><div style="margin-bottom:8px; display: flex; align-items: center; gap: 8px;"><span>最小延迟（秒）：</span><input type="number" id="replyMinInput" class="msg-input" value="${momentsCommentDelayMin}" step="1" style="width: 100px;"><span>秒</span></div><div style="margin-bottom:8px; display: flex; align-items: center; gap: 8px;"><span>最大延迟（秒）：</span><input type="number" id="replyMaxInput" class="msg-input" value="${momentsCommentDelayMax}" step="1" style="width: 100px;"><span>秒</span></div><div class="data-note">💡 初始评论会在发布后陆续出现，对回复速度的修改立即生效。</div></div><hr style="margin:12px 0;"><div><div style="font-weight:600;margin-bottom:8px;">📍 地点管理</div><div id="momentLocationsManager" style="max-height:180px;overflow-y:auto;margin-bottom:10px;"></div><div style="display:flex;gap:6px;"><input type="text" id="newLocationInput" placeholder="新地点名称" style="flex:1;background:var(--bg-body);border:1px solid var(--border-light);border-radius:20px;padding:6px 12px;"><button class="small-btn primary-outline" id="addLocationBtn"><i class="fa-solid fa-plus"></i> 添加</button></div><div class="data-note" style="margin-top:6px;">💡 修改后立即生效，新动态将随机使用列表中的地点</div></div></div></div><div class="manage-fold"><div class="manage-fold-header" onclick="this.parentElement.classList.toggle('open');this.classList.toggle('open')"><span class="fold-arrow">▶</span> <i class="fa-solid fa-database"></i> 数据</div><div class="manage-fold-body"><div class="button-group"><button class="sec-btn" id="exportDataBtn"><i class="fa-solid fa-file-export"></i> 导出备份</button><button class="sec-btn sec-btn-outline" id="importDataBtn"><i class="fa-solid fa-file-import"></i> 导入备份</button><button class="sec-btn sec-btn-outline" id="viewStorageBtn"><i class="fa-solid fa-hard-drive"></i> 查看储存</button><button class="sec-btn sec-btn-outline" id="resetAllDataBtn" style="background: var(--danger-bg); color: var(--danger-color);"><i class="fa-solid fa-skull-crossbones"></i> 重置所有数据</button></div></div></div><button class="sec-btn" id="closeManage" style="margin-top:12px;width:100%;">关闭</button></div>`;
                 document.body.appendChild(modalDiv);
                 async function ri() { const c = document.getElementById('imgPreviewList'); if (!c) return; if (!imgCardList
                         .length) { c.innerHTML =
@@ -7432,40 +7438,67 @@
                     localStorage.setItem('moment_locations', JSON.stringify(MOMENT_LOCATIONS));
                     input.value = '';
                     renderLocationList(); });
-                renderLocationList(); const icMinSlider = document.getElementById('icMinSlider'),
-                    icMaxSlider = document.getElementById('icMaxSlider'),
-                    icMinVal = document.getElementById('icMinValue'),
-                    icMaxVal = document.getElementById('icMaxValue'); if (icMinSlider && icMaxSlider) {
-                    function syncIcMin(v) { v = Math.max(1, Math.min(v, parseInt(icMaxSlider.value)));
-                        icMinSlider.value = v;
-                        icMinVal.textContent = v;
-                        initialCommentIntervalMin = v;
-                        localStorage.setItem(STORAGE.initialCommentIntervalMin, v); }
-
-                    function syncIcMax(v) { v = Math.max(parseInt(icMinSlider.value), v);
-                        icMaxSlider.value = v;
-                        icMaxVal.textContent = v;
-                        initialCommentIntervalMax = v;
-                        localStorage.setItem(STORAGE.initialCommentIntervalMax, v); }
-                    icMinSlider.addEventListener('input', () => syncIcMin(parseInt(icMinSlider.value)));
-                    icMaxSlider.addEventListener('input', () => syncIcMax(parseInt(icMaxSlider.value))); } const
-                    replyMinSlider = document.getElementById('replyMinSlider'),
-                    replyMaxSlider = document.getElementById('replyMaxSlider'),
-                    replyMinVal = document.getElementById('replyMinValue'),
-                    replyMaxVal = document.getElementById('replyMaxValue'); if (replyMinSlider && replyMaxSlider) {
-                    function syncReplyMin(v) { v = Math.max(2, Math.min(v, parseInt(replyMaxSlider.value)));
-                        replyMinSlider.value = v;
-                        replyMinVal.textContent = v;
-                        momentsCommentDelayMin = v;
-                        localStorage.setItem(STORAGE.momentsCommentDelayMin, v); }
-
-                    function syncReplyMax(v) { v = Math.max(parseInt(replyMinSlider.value), v);
-                        replyMaxSlider.value = v;
-                        replyMaxVal.textContent = v;
-                        momentsCommentDelayMax = v;
-                        localStorage.setItem(STORAGE.momentsCommentDelayMax, v); }
-                    replyMinSlider.addEventListener('input', () => syncReplyMin(parseInt(replyMinSlider.value)));
-                    replyMaxSlider.addEventListener('input', () => syncReplyMax(parseInt(replyMaxSlider.value))); }
+                renderLocationList(); // 初始评论速度 - 数字输入框绑定
+                const icMinInput = document.getElementById('icMinInput');
+                const icMaxInput = document.getElementById('icMaxInput');
+                if (icMinInput && icMaxInput) {
+                    const updateIcMin = () => {
+                        let val = parseInt(icMinInput.value);
+                        if (isNaN(val)) val = 5;
+                        initialCommentIntervalMin = val;
+                        localStorage.setItem(STORAGE.initialCommentIntervalMin, val);
+                        // 保证 最小 ≤ 最大
+                        if (initialCommentIntervalMin > initialCommentIntervalMax) {
+                            initialCommentIntervalMax = initialCommentIntervalMin;
+                            icMaxInput.value = initialCommentIntervalMin;
+                            localStorage.setItem(STORAGE.initialCommentIntervalMax, initialCommentIntervalMin);
+                        }
+                    };
+                    const updateIcMax = () => {
+                        let val = parseInt(icMaxInput.value);
+                        if (isNaN(val)) val = 15;
+                        initialCommentIntervalMax = val;
+                        localStorage.setItem(STORAGE.initialCommentIntervalMax, val);
+                        if (initialCommentIntervalMax < initialCommentIntervalMin) {
+                            initialCommentIntervalMin = initialCommentIntervalMax;
+                            icMinInput.value = initialCommentIntervalMax;
+                            localStorage.setItem(STORAGE.initialCommentIntervalMin, initialCommentIntervalMax);
+                        }
+                    };
+                    icMinInput.addEventListener('change', updateIcMin);
+                    icMaxInput.addEventListener('change', updateIcMax);
+                }
+                
+                // 回复速度 - 数字输入框绑定
+                const replyMinInput = document.getElementById('replyMinInput');
+                const replyMaxInput = document.getElementById('replyMaxInput');
+                if (replyMinInput && replyMaxInput) {
+                    const updateReplyMin = () => {
+                        let val = parseInt(replyMinInput.value);
+                        if (isNaN(val)) val = 10;
+                        momentsCommentDelayMin = val;
+                        localStorage.setItem(STORAGE.momentsCommentDelayMin, val);
+                        if (momentsCommentDelayMin > momentsCommentDelayMax) {
+                            momentsCommentDelayMax = momentsCommentDelayMin;
+                            replyMaxInput.value = momentsCommentDelayMin;
+                            localStorage.setItem(STORAGE.momentsCommentDelayMax, momentsCommentDelayMin);
+                        }
+                    };
+                    const updateReplyMax = () => {
+                        let val = parseInt(replyMaxInput.value);
+                        if (isNaN(val)) val = 20;
+                        momentsCommentDelayMax = val;
+                        localStorage.setItem(STORAGE.momentsCommentDelayMax, val);
+                        if (momentsCommentDelayMax < momentsCommentDelayMin) {
+                            momentsCommentDelayMin = momentsCommentDelayMax;
+                            replyMinInput.value = momentsCommentDelayMax;
+                            localStorage.setItem(STORAGE.momentsCommentDelayMin, momentsCommentDelayMax);
+                        }
+                    };
+                    replyMinInput.addEventListener('change', updateReplyMin);
+                    replyMaxInput.addEventListener('change', updateReplyMax);
+                }
+                
                 document.getElementById('saveMomentsScheduleBtn').onclick = () => { const newStart = document.getElementById(
                         'momentsTimeStartInput').value; const newEnd = document.getElementById('momentsTimeEndInput')
                         .value; const newMin = parseInt(document.getElementById('momentsCountMinInput').value); const
@@ -8548,10 +8581,121 @@
 
             function saveLastActiveTime() { localStorage.setItem(STORAGE.lastActiveTime, Date.now().toString()); }
 
-            function generateOfflineMomentsIfNeeded() { if (offlineGeneratedHandled) return; const lastActiveStr = localStorage
-                    .getItem(STORAGE.lastActiveTime); if (!lastActiveStr) { saveLastActiveTime(); return; }
+            async function generateOfflineMomentsIfNeeded() {
+                if (offlineGeneratedHandled) return;
+                const lastActiveStr = localStorage.getItem(STORAGE.lastActiveTime);
+                if (!lastActiveStr) {
+                    saveLastActiveTime();
+                    return;
+                }
                 offlineGeneratedHandled = true;
-                saveLastActiveTime(); }
+            
+                const lastActiveTime = parseInt(lastActiveStr, 10);
+                const now = Date.now();
+                const daysDiff = Math.floor((now - lastActiveTime) / (1000 * 60 * 60 * 24));
+                if (daysDiff <= 0) return;
+            
+                // 最多补发最近 14 天
+                const maxOfflineDays = Math.min(daysDiff, 14);
+                console.log(`📱 离线 ${daysDiff} 天，补发最近 ${maxOfflineDays} 天的朋友圈`);
+            
+                // 获取需要补发的作者列表
+                const authors = [];
+                authors.push({ id: 'meng', name: profile.mengNick || 'ta' });
+                if (groupMembersMomentsEnabled && groupChatEnabled) {
+                    groupMembers.forEach(m => {
+                        if (m.enabled) authors.push({ id: m.id, name: m.name });
+                    });
+                }
+            
+                // 设置全局标记，防止补发过程中弹出通知
+                window.__offlineGenerating = true;
+            
+                for (let dayOffset = 1; dayOffset <= maxOfflineDays; dayOffset++) {
+                    const targetDate = new Date(now - dayOffset * 86400000);
+                    const dateStr = targetDate.toDateString();
+            
+                    // 跳过非工作时间段（只检查小时，不检查具体分钟）
+                    const hour = targetDate.getHours();
+                    const [startHour] = (momentsTimeStart || '08:00').split(':').map(Number);
+                    const [endHour] = (momentsTimeEnd || '22:00').split(':').map(Number);
+                    let isWorkTime = false;
+                    if (startHour <= endHour) {
+                        isWorkTime = hour >= startHour && hour < endHour;
+                    } else {
+                        isWorkTime = hour >= startHour || hour < endHour;
+                    }
+                    if (!isWorkTime) continue;
+            
+                    // 为每个作者生成动态
+                    for (const author of authors) {
+                        const existingCount = moments.filter(m =>
+                            m.authorId === author.id &&
+                            new Date(m.timestamp).toDateString() === dateStr
+                        ).length;
+                        const targetCount = momentsCountMin + Math.floor(Math.random() * (momentsCountMax - momentsCountMin + 1));
+                        const needGenerate = Math.max(0, targetCount - existingCount);
+                        if (needGenerate === 0) continue;
+            
+                        for (let i = 0; i < needGenerate; i++) {
+                            // 生成随机时间（在当天的时间窗口内）
+                            const randomHour = startHour + Math.floor(Math.random() * (endHour - startHour));
+                            const randomMinute = Math.floor(Math.random() * 60);
+                            targetDate.setHours(randomHour, randomMinute, 0, 0);
+                            const timestamp = targetDate.getTime();
+            
+                            // 生成一条朋友圈动态
+                            const newMoment = {
+                                id: 'mom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                                authorId: author.id,
+                                authorName: author.name,
+                                authorAvatar: getAuthorAvatar(author.id),
+                                content: getRandomMomentText(author.id),
+                                images: [],
+                                feeling: statusList.length ? statusList[Math.floor(Math.random() * statusList.length)] : '✨ 温柔',
+                                location: MOMENT_LOCATIONS[Math.floor(Math.random() * MOMENT_LOCATIONS.length)],
+                                timestamp: timestamp,
+                                likes: [],
+                                comments: []
+                            };
+            
+                            // 模拟点赞（随机几个其他成员）
+                            const otherAuthors = authors.filter(a => a.id !== author.id);
+                            if (otherAuthors.length) {
+                                const likeCount = Math.min(otherAuthors.length, Math.floor(Math.random() * 3) + 1);
+                                const shuffled = [...otherAuthors].sort(() => Math.random() - 0.5);
+                                newMoment.likes = shuffled.slice(0, likeCount).map(a => a.id);
+                            }
+            
+                            moments.unshift(newMoment);
+                        }
+                    }
+                }
+            
+                // 保存并清理标记
+                saveMoments();
+                window.__offlineGenerating = false;
+                saveLastActiveTime();
+                console.log(`✅ 离线补发完成，共新增 ${moments.length} 条动态`);
+            }
+            
+            // 辅助函数：随机获取一段文本（用于动态内容）
+            function getRandomMomentText(authorId) {
+                const pool = getMomentTextPool(authorId);
+                if (!pool.length) return "✨ 今天也很美好。";
+                const sentenceCount = Math.random() < 0.85 ? 1 : (Math.random() < 0.95 ? 2 : 3);
+                const selected = [];
+                for (let i = 0; i < sentenceCount; i++) {
+                    const s = pool[Math.floor(Math.random() * pool.length)];
+                    if (!selected.includes(s)) selected.push(s);
+                }
+                let text = selected.join(' ');
+                if (Math.random() < 0.3 && emojiCardList.length) {
+                    const emoji = emojiCardList[Math.floor(Math.random() * emojiCardList.length)];
+                    text = text + ' ' + emoji;
+                }
+                return text;
+            }
 
             window.addEventListener('beforeunload', () => { saveLastActiveTime();
                 updateLastOnlineTime();
@@ -10376,7 +10520,10 @@
                             const gid = textarea.dataset.groupId;
                             const group = currentGroups.groups.find(g => g.id === gid);
                             if (group) {
-                                group.ruleKeywords = textarea.value.split(',').map(s => s.trim()).filter(s => s);
+                                // ✅ 新增：将中文逗号转换为英文逗号
+                                let rawKeywords = textarea.value;
+                                rawKeywords = rawKeywords.replace(/，/g, ',');
+                                group.ruleKeywords = rawKeywords.split(',').map(s => s.trim()).filter(s => s);
                             }
                         });
                         saveGroupsCallback(currentGroups);
