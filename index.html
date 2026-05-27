@@ -3742,6 +3742,14 @@
             background: transparent !important;
             box-shadow: none !important;
         }
+        @keyframes letterNotifySlideIn {
+            from { transform: translateX(-50%) translateY(-220px); opacity: 0; }
+            to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        @keyframes letterNotifySlideOut {
+            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+            to   { transform: translateX(-50%) translateY(-150px); opacity: 0; }
+        }
     </style>
 </head>
 <body>
@@ -5939,14 +5947,59 @@
                             return; const momentId = momentCard.dataset.momentId; const moment = moments.find(m => m.id ===
                                 momentId); if (moment) { showMemberHistoryMoments(moment.authorId); } }); }); }
 
-            function showImageOverlay(src) { const overlay = document.createElement('div');
+            async function showImageOverlay(src) {
+                const existing = document.querySelector('.image-overlay');
+                if (existing) existing.remove();
+            
+                const overlay = document.createElement('div');
                 overlay.className = 'image-overlay';
-                overlay.style.cssText =
-                    'position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:9999;cursor:zoom-out;';
-                overlay.innerHTML =
-                    `<img src="${src}" style="max-width:90%;max-height:90%;border-radius:12px;object-fit:contain;">`;
+                overlay.style.cssText = `
+                    position:fixed;
+                    inset:0;
+                    background:rgba(0,0,0,0.9);
+                    display:flex;
+                    justify-content:center;
+                    align-items:center;
+                    z-index:9999;
+                    cursor:zoom-out;
+                `;
+            
+                const loader = document.createElement('div');
+                loader.style.color = '#fff';
+                loader.style.fontSize = '20px';
+                loader.innerText = '加载中...';
+                overlay.appendChild(loader);
                 document.body.appendChild(overlay);
-                overlay.addEventListener('click', () => overlay.remove()); }
+            
+                try {
+                    let realUrl = src;
+                    if (typeof isImgIdRef === 'function' && isImgIdRef(src)) {
+                        realUrl = await resolveImageUrl(src);
+                        if (!realUrl) throw new Error('无法解析图片');
+                    }
+            
+                    const img = document.createElement('img');
+                    img.style.maxWidth = '90%';
+                    img.style.maxHeight = '90%';
+                    img.style.borderRadius = '12px';
+                    img.style.objectFit = 'contain';
+            
+                    img.onload = () => {
+                        if (loader.parentNode) loader.remove();
+                        overlay.appendChild(img);
+                    };
+                    img.onerror = () => {
+                        loader.innerText = '加载失败';
+                        setTimeout(() => overlay.remove(), 1000);
+                    };
+                    img.src = realUrl;
+                } catch (err) {
+                    loader.innerText = '加载失败';
+                    setTimeout(() => overlay.remove(), 1000);
+                }
+            
+                overlay.addEventListener('click', () => overlay.remove());
+            }
 
             function showMemberHistoryMoments(authorId) { const authorMoments = moments.filter(m => m.authorId === authorId).sort((a,
                     b) => b.timestamp - a.timestamp); if (authorMoments.length === 0) { alert('该成员暂无朋友圈'); return; } const
@@ -7438,7 +7491,7 @@
                     localStorage.setItem('moment_locations', JSON.stringify(MOMENT_LOCATIONS));
                     input.value = '';
                     renderLocationList(); });
-                renderLocationList(); // 初始评论速度 - 数字输入框绑定
+                renderLocationList(); 
                 const icMinInput = document.getElementById('icMinInput');
                 const icMaxInput = document.getElementById('icMaxInput');
                 if (icMinInput && icMaxInput) {
@@ -7447,7 +7500,6 @@
                         if (isNaN(val)) val = 5;
                         initialCommentIntervalMin = val;
                         localStorage.setItem(STORAGE.initialCommentIntervalMin, val);
-                        // 保证 最小 ≤ 最大
                         if (initialCommentIntervalMin > initialCommentIntervalMax) {
                             initialCommentIntervalMax = initialCommentIntervalMin;
                             icMaxInput.value = initialCommentIntervalMin;
@@ -7469,7 +7521,6 @@
                     icMaxInput.addEventListener('change', updateIcMax);
                 }
                 
-                // 回复速度 - 数字输入框绑定
                 const replyMinInput = document.getElementById('replyMinInput');
                 const replyMaxInput = document.getElementById('replyMaxInput');
                 if (replyMinInput && replyMaxInput) {
@@ -7872,6 +7923,22 @@
              * @param {Object|null} targetMember 收信成员对象（群聊模式用）
              */
             function showLetterReplyNotification(letter, targetMember) {
+                if (!document.getElementById('letterNotifyStyle')) {
+                    const style = document.createElement('style');
+                    style.id = 'letterNotifyStyle';
+                    style.textContent = `
+                        @keyframes letterNotifySlideIn {
+                            from { transform: translateX(-50%) translateY(-220px); opacity: 0; }
+                            to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+                        }
+                        @keyframes letterNotifySlideOut {
+                            from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                            to   { transform: translateX(-50%) translateY(-150px); opacity: 0; }
+                        }
+                    `;
+                    document.head.appendChild(style);
+                }
+            
                 const existingCard = document.getElementById('letterReplyNotifyCard');
                 if (existingCard) existingCard.remove();
             
@@ -7889,43 +7956,58 @@
             
                 const card = document.createElement('div');
                 card.id = 'letterReplyNotifyCard';
-                card.className = 'letter-notify';
                 card.style.cssText = `
-                    position:fixed; top:calc(var(--safe-top,0px)+60px); left:50%; transform:translateX(-50%) translateY(-120px);
+                    position:fixed; top:calc(var(--safe-top,0px)+80px); left:50%; transform:translateX(-50%) translateY(-220px);
                     background:var(--card-bg); backdrop-filter:blur(24px); border-radius:20px;
-                    padding:12px 16px; display:flex; align-items:center; gap:12px;
+                    padding:14px 20px; display:flex; align-items:center; gap:14px;
                     border-left: 6px solid var(--accent-color);
-                    box-shadow:0 10px 25px -5px rgba(0,0,0,0.2);
-                    z-index:9998; cursor:pointer; max-width:90vw; width:auto; min-width:280px;
+                    box-shadow:0 12px 30px rgba(0,0,0,0.25);
+                    z-index:10000; cursor:pointer; max-width:90vw; width:auto; min-width:300px;
                     transition:transform 0.35s cubic-bezier(0.22,0.61,0.36,1);
-                    animation:momentNotifySlideIn 0.35s cubic-bezier(0.22,0.61,0.36,1) forwards;
+                    animation:letterNotifySlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) forwards;
                 `;
                 card.innerHTML = `
                     <div style="position:relative;">
-                        <img src="${avatarUrl}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-color);">
-                        <div style="position:absolute;bottom:-6px;right:-6px;background:#e6b422;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;">✉️</div>
+                        <img src="${avatarUrl}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--accent-color);">
+                        <div style="position:absolute;bottom:-4px;right:-4px;background:#e6b422;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;">✉️</div>
                     </div>
                     <div style="flex:1;">
-                        <div style="font-weight:600;">📬 来自 ${escapeHtml(senderName)} 的回信</div>
-                        <div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${escapeHtml(replyPreview)}</div>
+                        <div style="font-weight:700;font-size:15px;">📬 来自 ${escapeHtml(senderName)} 的回信</div>
+                        <div style="font-size:13px; color:var(--text-secondary); margin-top:4px;">${escapeHtml(replyPreview)}</div>
                     </div>
-                    <div style="background:var(--accent-color); color:#fff; padding:6px 14px; border-radius:30px; font-size:12px;">查看</div>
+                    <div style="background:var(--accent-color); color:#fff; padding:8px 18px; border-radius:40px; font-size:13px; font-weight:500;">查看</div>
                 `;
+                
                 card.addEventListener('click', () => {
                     showLetterDetail(letter);
-                    card.style.animation = 'momentNotifySlideOut 0.3s forwards';
+                    card.style.animation = 'letterNotifySlideOut 0.3s forwards';
                     setTimeout(() => card.remove(), 300);
                 });
                 document.body.appendChild(card);
+                console.log('[回信通知] 已显示卡片', senderName, replyPreview);
+                
                 setTimeout(() => {
                     if (card.parentNode) {
-                        card.style.animation = 'momentNotifySlideOut 0.4s forwards';
+                        card.style.animation = 'letterNotifySlideOut 0.4s forwards';
                         setTimeout(() => card.remove(), 400);
                     }
-                }, 10000);
-            }            
+                }, 15000);
+                
+          
+                if (navigator.vibrate) navigator.vibrate(200);
+                
+    
+                if (notificationEnabled && "Notification" in window && Notification.permission === "granted") {
+                    try {
+                        new Notification(`📬 来自 ${senderName} 的回信`, { body: replyPreview, icon: avatarUrl });
+                    } catch(e) { console.warn(e); }
+                }
+            }          
             
             async function processLetterReply(letter) {
+                console.log('[回信处理] 检查信件', letter.id, letter.status, letter.dueTime, Date.now());
+                if (letter.status !== 'pending' || Date.now() < letter.dueTime) return;
+                console.log('[回信处理] 开始生成回信', letter.id);
                 if (letter.status !== 'pending' || Date.now() < letter.dueTime) return;
                 let targetMember = null;
                 if (letter.targetMemberId && groupChatEnabled) {
@@ -7943,7 +8025,11 @@
                     try { new Notification(`📬 手写信回信`, { body: body, icon: targetMember?.avatar || profile.mengAvatar || defaultAvatar() }); } catch (e) {} 
                 }
                 
-                showLetterReplyNotification(letter, targetMember);
+                try {
+                    showLetterReplyNotification(letter, targetMember);
+                } catch(e) {
+                    console.error('显示回信通知失败', e);
+                }
                 checkPuzzleConditions(); }
             async function processAllPendingLetters() { for (let l of letters) { if (l.status === 'pending' && Date.now() >= l
                         .dueTime) await processLetterReply(l); }
@@ -8595,11 +8681,9 @@
                 const daysDiff = Math.floor((now - lastActiveTime) / (1000 * 60 * 60 * 24));
                 if (daysDiff <= 0) return;
             
-                // 最多补发最近 14 天
                 const maxOfflineDays = Math.min(daysDiff, 14);
                 console.log(`📱 离线 ${daysDiff} 天，补发最近 ${maxOfflineDays} 天的朋友圈`);
             
-                // 获取需要补发的作者列表
                 const authors = [];
                 authors.push({ id: 'meng', name: profile.mengNick || 'ta' });
                 if (groupMembersMomentsEnabled && groupChatEnabled) {
@@ -8608,14 +8692,12 @@
                     });
                 }
             
-                // 设置全局标记，防止补发过程中弹出通知
                 window.__offlineGenerating = true;
             
                 for (let dayOffset = 1; dayOffset <= maxOfflineDays; dayOffset++) {
                     const targetDate = new Date(now - dayOffset * 86400000);
                     const dateStr = targetDate.toDateString();
             
-                    // 跳过非工作时间段（只检查小时，不检查具体分钟）
                     const hour = targetDate.getHours();
                     const [startHour] = (momentsTimeStart || '08:00').split(':').map(Number);
                     const [endHour] = (momentsTimeEnd || '22:00').split(':').map(Number);
@@ -8627,7 +8709,6 @@
                     }
                     if (!isWorkTime) continue;
             
-                    // 为每个作者生成动态
                     for (const author of authors) {
                         const existingCount = moments.filter(m =>
                             m.authorId === author.id &&
@@ -8638,13 +8719,11 @@
                         if (needGenerate === 0) continue;
             
                         for (let i = 0; i < needGenerate; i++) {
-                            // 生成随机时间（在当天的时间窗口内）
                             const randomHour = startHour + Math.floor(Math.random() * (endHour - startHour));
                             const randomMinute = Math.floor(Math.random() * 60);
                             targetDate.setHours(randomHour, randomMinute, 0, 0);
                             const timestamp = targetDate.getTime();
             
-                            // 生成一条朋友圈动态
                             const newMoment = {
                                 id: 'mom_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
                                 authorId: author.id,
@@ -8659,7 +8738,6 @@
                                 comments: []
                             };
             
-                            // 模拟点赞（随机几个其他成员）
                             const otherAuthors = authors.filter(a => a.id !== author.id);
                             if (otherAuthors.length) {
                                 const likeCount = Math.min(otherAuthors.length, Math.floor(Math.random() * 3) + 1);
@@ -8672,14 +8750,12 @@
                     }
                 }
             
-                // 保存并清理标记
                 saveMoments();
                 window.__offlineGenerating = false;
                 saveLastActiveTime();
                 console.log(`✅ 离线补发完成，共新增 ${moments.length} 条动态`);
             }
             
-            // 辅助函数：随机获取一段文本（用于动态内容）
             function getRandomMomentText(authorId) {
                 const pool = getMomentTextPool(authorId);
                 if (!pool.length) return "✨ 今天也很美好。";
