@@ -14,7 +14,7 @@
         }
         :root {
             --bg-body: #f8f5fc;
-            --chat-bg: #f8f5fc;
+            --chat-bg: #ffffff;
             --bubble-me: #f0e7ff;
             --bubble-meng: #ffffff;
             --text-primary: #1a1628;
@@ -1436,28 +1436,34 @@
         .status-left {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 12px;
             flex: 1;
             min-width: 0;
+            flex-wrap: wrap;
+        }
+        .status-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .status-badge {
+            background: var(--accent-light);
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 700;         
+            color: var(--text-primary);
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+            transition: all 0.2s ease;
+            border: 0.5px solid var(--border-light);
         }
         .status-icon {
-            font-size: 16px;
+            font-size: 18px;
             color: var(--accent-color);
             filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
             transition: color 0.3s ease;
-        }
-        .status-text {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-primary);
-            background: var(--accent-light);
-            padding: 5px 12px;
-            border-radius: 40px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 150px;
-            transition: all 0.3s ease;
         }
         .status-right {
             display: flex;
@@ -1465,18 +1471,7 @@
             gap: 6px;
             flex-shrink: 0;
         }
-        .status-timer {
-            font-size: 10px;
-            font-family: monospace;
-            background: var(--bg-body);
-            padding: 3px 8px;
-            border-radius: 50px;
-            color: var(--text-secondary);
-            letter-spacing: 0.3px;
-            transition: all 0.3s ease;
-        }
-        .status-edit-btn,
-        .status-refresh-btn {
+        .status-edit-btn {
             background: none;
             border: none;
             font-size: 13px;
@@ -1489,8 +1484,7 @@
             align-items: center;
             justify-content: center;
         }
-        .status-edit-btn:active,
-        .status-refresh-btn:active {
+        .status-edit-btn:active {
             background: rgba(0, 0, 0, 0.1);
             transform: scale(0.92);
         }
@@ -2567,13 +2561,14 @@
             font-size: 14px;
             font-weight: 500;
             transition: 0.15s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
+            display: inline-block;          
             white-space: normal;
             word-break: break-word;
-            max-width: 90vw;          
+            overflow-wrap: break-word;    
+            max-width: 100%;              
             text-align: left;
+            flex-wrap: wrap;
+            justify-content: flex-start;
         }
         
         .wf-tag-cloud {
@@ -3030,17 +3025,15 @@
                 height: 28px;
                 font-size: 14px;
             }
-            .status-text {
-                max-width: 120px;
-                font-size: 12px;
-                padding: 4px 10px;
+            .status-badges {
+                gap: 4px;
             }
-            .status-timer {
-                font-size: 9px;
-                padding: 2px 6px;
+            .status-badge {
+                font-size: 10px;
+                padding: 2px 8px;
             }
             .status-icon {
-                font-size: 16px;
+                font-size: 14px;
             }
             .avatar-img {
                 width: 38px;
@@ -3750,6 +3743,15 @@
             from { transform: translateX(-50%) translateY(0); opacity: 1; }
             to   { transform: translateX(-50%) translateY(-150px); opacity: 0; }
         }
+        #decideTabYesNo.active,
+        #decideTabCustom.active {
+            background: var(--accent-color);
+            color: #fff;
+            border-color: transparent;
+        }
+        #decideYesNoPanel, #decideCustomPanel {
+            transition: all 0.2s ease;
+        }
     </style>
 </head>
 <body>
@@ -3788,6 +3790,7 @@
                     <i class="fa-solid fa-globe"></i>
                     <span class="moments-badge" id="momentsBadge"></span>
                 </button>
+                <button class="icon-btn" id="decideBtn" title="帮我决定"><i class="fa-solid fa-dice-d6"></i></button>  
                 <button class="icon-btn" id="toolbarMusicBtn" title="音乐库"><i class="fa-solid fa-music"></i></button>
                 <button class="icon-btn" id="letterBtn" title="投递信件"><i class="fa-solid fa-envelope"></i></button>
                 <button class="icon-btn" id="letterHistoryBtn" title="信件历史"><i class="fa-solid fa-clock-rotate-left"></i></button>
@@ -3805,12 +3808,15 @@
         <div class="status-bar-container">
             <div class="status-card">
                 <div class="status-left">
-                    <span class="status-icon"><i class="fa-solid fa-heart"></i></span>
-                    <span class="status-text" id="dynamicStatusText">加载中...</span>
+                    <span class="status-icon"><i class="fa-solid fa-cloud-sun"></i></span>
+                    <div class="status-badges">
+                        <span id="weatherStatus" class="status-badge">☀️ 晴天</span>
+                        <span id="moodStatus" class="status-badge">😊 开心</span>
+                        <span id="phraseStatus" class="status-badge">✨ 温柔且坚定</span>
+                    </div>
                 </div>
                 <div class="status-right">
-                    <span class="status-timer" id="statusTimerLabel">🌙 更新倒计时</span>
-                    <button class="status-edit-btn" id="editStatusListBtn" title="编辑ta的状态库"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button class="status-edit-btn" id="editStatusListBtn" title="编辑状态库"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
             </div>
         </div>
@@ -3912,6 +3918,46 @@
         <button id="menuQuoteBtn" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; border: none; background: transparent; color: var(--text-primary); cursor: pointer; font-size: 14px;"><i class="fa-regular fa-comment-dots"></i> 引用回复</button>
         <button id="menuDeleteBtn" style="display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 16px; border: none; background: transparent; color: #ff6b6b; cursor: pointer; font-size: 14px; border-top: 0.5px solid var(--border-light);"><i class="fa-regular fa-trash-can"></i> 删除消息</button>
     </div>   
+    <!-- 帮我决定 模态窗 -->
+    <div id="decideModal" class="modal hidden">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="settings-title"><i class="fa-solid fa-dice-d6"></i> 帮我决定 · 让ta或群成员帮你</div>
+            <div class="form-group" style="margin-bottom: 16px;">
+                <label class="form-label" style="display:block; margin-bottom:6px;">👤 请谁帮你决定？</label>
+                <select id="decideWhomSelect" class="msg-input" style="width:100%;"></select>
+                <div class="data-note">✧ 可让ta或群聊中的成员为你做决定</div>
+            </div>
+            <div style="display: flex; gap: 12px; border-bottom: 2px solid var(--border-light); margin-bottom: 16px;">
+                <button id="decideTabYesNo" class="theme-pill-btn" data-tab="yesno" style="flex:1;">❓ 是 / 否 问句</button>
+                <button id="decideTabCustom" class="theme-pill-btn" data-tab="custom" style="flex:1;">🎲 自定义选项</button>
+            </div>
+            <div id="decideYesNoPanel">
+                <textarea id="decideQuestion" class="textarea-clean" rows="2" placeholder="例如：今晚要不要去吃火锅？"></textarea>
+                <div class="button-group" style="margin-top: 10px; justify-content: flex-end;">
+                    <button class="sec-btn" id="decideYesNoSubmitBtn">✨ 请ta/成员决定</button>
+                </div>
+            </div>
+            <div id="decideCustomPanel" style="display: none;">
+                <textarea id="decideOptions" class="textarea-clean" rows="4" placeholder="每行一个选项，例如：&#10;喝奶茶&#10;喝果茶&#10;喝咖啡"></textarea>
+                <div style="display: flex; gap: 12px; align-items: center; margin: 10px 0; flex-wrap: wrap;">
+                    <span style="font-size: 13px;">⏱️ 思考时间 (秒)</span>
+                    <input type="number" id="decideDelaySec" class="msg-input" value="3" step="1" min="1" max="15" style="width: 80px;">
+                    <span style="font-size: 13px;">🎲 抽取数量</span>
+                    <input type="number" id="decideSelectCount" class="msg-input" value="1" step="1" min="1" max="10" style="width: 80px;">
+                    <span class="data-note">决定者会随机抽取指定数量的不同选项。(⚠️注意: 抽取的结果不能100%确定是否为ta本人决定的，需要根据和ta链接的情况而定。)</span>
+                </div>
+                <div class="button-group" style="justify-content: flex-end;">
+                    <button class="sec-btn" id="decideCustomSubmitBtn">🎲 让ta/成员抽取</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 16px;">
+                <button class="sec-btn sec-btn-outline" id="viewDecideHistoryBtn" style="flex:1;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>查看决定历史
+                </button>
+                <button class="sec-btn sec-btn-outline" id="closeDecideModal" style="flex:1;">关闭</button>
+            </div>
+        </div>
+    </div>
     
     <script>
         (function() {
@@ -3990,8 +4036,7 @@
                 if (msg) {
                     if (msg.type === 'image' && isImgIdRef(msg.content)) {
                         const imgId = extractImgId(msg.content);
-                        const usedInOtherMessages = messages.some(m => m.id != msgId && m.type === 'image' && extractImgId(m
-                            .content) === imgId);
+                        const usedInOtherMessages = messages.some(m => m.id != msgId && m.type === 'image' && extractImgId(m.content) === imgId);
                         const usedInImgCards = imgCardList.some(card => extractImgId(card.url) === imgId);
                         const customBg = localStorage.getItem(STORAGE.customBgImage);
                         const usedInBg = (customBg && extractImgId(customBg) === imgId);
@@ -4068,8 +4113,7 @@
                             if (entry.isIntersecting) {
                                 const img = entry.target;
                                 const ref = img.getAttribute('data-img-ref');
-                                if (ref) { loadImgElement(img, ref).then(() => { img.removeAttribute(
-                                    'data-img-ref'); }); }
+                                if (ref) { loadImgElement(img, ref).then(() => { img.removeAttribute('data-img-ref'); }); }
                                 imageObserver.unobserve(img);
                             }
                         });
@@ -4080,8 +4124,7 @@
                 if (!container) return;
                 const imgs = container.querySelectorAll('img[data-img-ref]');
                 for (const img of imgs) {
-                    if (imageObserver) { imageObserver.observe(img); } else { const ref = img.getAttribute('data-img-ref'); if (
-                            ref) await loadImgElement(img, ref); }
+                    if (imageObserver) { imageObserver.observe(img); } else { const ref = img.getAttribute('data-img-ref'); if (ref) await loadImgElement(img, ref); }
                 }
             }
             function makeImgId() { return 'IMG_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10); }
@@ -4118,7 +4161,7 @@
                 mengMaybeIgnore: 'meng_maybe_ignore',
                 customBubbleCSS: 'custom_bubble_css',
                 customBgImage: 'custom_bg_image',
-                statusList: 'ta_status_list',
+                statusList: 'xiayi_status_list',
                 musicList: 'xiayi_music_list',
                 musicOn: 'xiayi_music_on',
                 currentMusicIndex: 'xiayi_music_index',
@@ -4189,6 +4232,8 @@
             }
             let musicPlayMode = 'random';
             let immersiveMode = false;
+            let currentDecideWhom = null;
+            let decideModalVisible = false;
             let offlineGeneratedHandled = false;
             let wordCardList = ["别怕，我在。", "你的声音，我听得很清楚。", "和你待在一起，很安心。", "我会一直陪着你。", "今天也很想你。", "累了就靠一会儿。", "有我在，不用慌。",
                 "你很重要，比什么都重要。", "晚安，我的小朋友。", "想和你多待一会儿。", "不要离开我。", "我只对你温柔。", "你是我的例外。", "心跳，是为你而乱的。", "梦里也要见到你。"
@@ -5433,7 +5478,7 @@
                             m = groupMembers.find(mm => mm.id === authorId); if (m) name = m.name; } const pool =
                         getMomentTextPool(authorId); const text = pool[Math.floor(Math.random() * pool.length)] || '💬';
                     candidates.push({ authorId, authorName: name, content: text, timestamp: Date.now() }); }
-                moment.comments = moment.comments || []; const targetCount = 1 + Math.floor(Math.random() * 2); let addedCount = 0;
+                moment.comments = moment.comments || []; const targetCount = Math.floor(Math.random() * 3); let addedCount = 0;
 
                 function addNext() { if (addedCount >= targetCount || !moments.find(m => m.id === moment.id)) return; const
                         candidate = candidates[addedCount % candidates.length]; const pool = getMomentTextPool(candidate.authorId); const
@@ -7320,7 +7365,9 @@
                         STORAGE.momentsCountMin, STORAGE.momentsCountMax,
                         'moment_locations', 'puzzleData', 'lx_bubbleFontSize', 'xiayi_immersive_mode',
                         MOMENTS_STORAGE_KEY, 'xiayi_lastOnlineTime',
-                        'xiayi_global_word_groups'  
+                        'xiayi_global_word_groups',  
+                        'xiayi_mood_list',           
+                        'xiayi_weather_list'          
                     ];
                     
                     for (let i = 0; i < localStorage.length; i++) {
@@ -7894,7 +7941,7 @@
                         }
                     });
                 }
-                const useMatched = matchedReplies.length > 0 && Math.random() < 0.3;
+                const useMatched = matchedReplies.length > 0 && Math.random() < 0.03;
                 const cnt = Math.floor(Math.random() * 8) + 8;
                 const res = [];
                 
@@ -8528,6 +8575,253 @@
                 currentActionMsg = null;
             }
             
+            function refreshDecideWhomList() {
+                const select = document.getElementById('decideWhomSelect');
+                if (!select) return;
+                let options = [];
+                options.push({ id: 'meng', name: profile.mengNick || 'ta', type: 'meng' });
+                
+                if (groupMembers && groupMembers.length > 0) {
+                    const activeMembers = groupMembers.filter(m => m.enabled !== false); 
+                    activeMembers.forEach(m => {
+                        options.push({ id: m.id, name: m.name, type: 'member' });
+                    });
+                }
+                
+                const seen = new Set();
+                const finalOpts = [];
+                for (let opt of options) {
+                    if (!seen.has(opt.id)) {
+                        seen.add(opt.id);
+                        finalOpts.push(opt);
+                    }
+                }
+                select.innerHTML = '';
+                finalOpts.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.id;
+                    option.textContent = opt.name + (opt.type === 'meng' ? ' (ta)' : '');
+                    select.appendChild(option);
+                });
+                if (finalOpts.length) currentDecideWhom = finalOpts[0];
+                else currentDecideWhom = { id: 'meng', name: profile.mengNick || 'ta' };
+            }
+            
+            function getCurrentDecideWhom() {
+                const select = document.getElementById('decideWhomSelect');
+                if (!select) return { id: 'meng', name: profile.mengNick || 'ta' };
+                const selectedId = select.value;
+                if (selectedId === 'meng') {
+                    return { id: 'meng', name: profile.mengNick || 'ta' };
+                }
+                const member = groupMembers.find(m => m.id === selectedId);
+                if (member) return { id: member.id, name: member.name };
+                return { id: 'meng', name: profile.mengNick || 'ta' };
+            }
+            
+            async function sendDecideRequest(questionOrOptions, mode, delaySec = 3, selectCount = 1) {
+                const decider = getCurrentDecideWhom();
+                if (!decider) {
+                    showToast('没有可用的决定者', '⚠️');
+                    return;
+                }
+                let userMsgText = '';
+                let replyPromise = null;
+                let resultText = '';      
+                let requestPreview = ''; 
+            
+                if (mode === 'yesno') {
+                    userMsgText = `❓ 帮我决定：${questionOrOptions}`;
+                    const result = Math.random() < 0.5 ? '是' : '否';
+                    resultText = `决定结果：${result}`;
+                    requestPreview = `【是/否】${questionOrOptions}`;
+                    replyPromise = async () => {
+                        await new Promise(r => setTimeout(r, delaySec * 1000));
+                        const replyText = `关于“${questionOrOptions}”，我的决定是：${result}`;
+                        if (decider.id === 'meng') {
+                            addMessage('meng', replyText, 'text');
+                        } else {
+                            const member = groupMembers.find(m => m.id === decider.id);
+                            if (member) {
+                                addMessageWithSender(member.id, member.name, member.avatar || defaultAvatar(), replyText, 'text');
+                            } else {
+                                addMessage('meng', replyText, 'text');
+                            }
+                        }
+                        playSound('meng');
+                    };
+                } else { // custom 模式
+                    const lines = questionOrOptions.split(/\r?\n/).filter(l => l.trim().length > 0);
+                    if (lines.length < 2) {
+                        showToast('自定义选项至少需要两个不同的选项', '⚠️');
+                        return;
+                    }
+                    userMsgText = `🎲 帮我从以下选项决定：\n${lines.join('\n')}`;
+                    const previewOptions = lines.length > 3 ? lines.slice(0,3).join('、') + '…' : lines.join('、');
+                    requestPreview = `【自定义】${previewOptions}`;
+                    replyPromise = async () => {
+                        await new Promise(r => setTimeout(r, delaySec * 1000));
+                        let finalCount = Math.min(selectCount, lines.length);
+                        if (finalCount < selectCount) {
+                            showToast(`⚠️ 选项总数只有 ${lines.length} 个，将抽取全部不同选项`, '🎲');
+                        }
+                        const shuffled = [...lines];
+                        for (let i = shuffled.length - 1; i > 0; i--) {
+                            const j = Math.floor(Math.random() * (i + 1));
+                            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                        }
+                        const chosen = shuffled.slice(0, finalCount);
+                        let replyText = '';
+                        if (chosen.length === 1) {
+                            replyText = `我选：${chosen[0]}`;
+                        } else {
+                            replyText = `我抽中的是：${chosen.join('、')}`;
+                        }
+                        resultText = `抽取结果：${chosen.join('、')}`;
+                        if (decider.id === 'meng') {
+                            addMessage('meng', replyText, 'text');
+                        } else {
+                            const member = groupMembers.find(m => m.id === decider.id);
+                            if (member) {
+                                addMessageWithSender(member.id, member.name, member.avatar || defaultAvatar(), replyText, 'text');
+                            } else {
+                                addMessage('meng', replyText, 'text');
+                            }
+                        }
+                        playSound('meng');
+                    };
+                }
+            
+                addMessage('me', userMsgText, 'text');
+                playSound('me');
+            
+                if (replyPromise) await replyPromise();
+           
+                saveDecideHistory({
+                    deciderId: decider.id,
+                    deciderName: decider.name,
+                    mode: mode,
+                    requestPreview: requestPreview,
+                    resultText: resultText,
+                    rawQuestion: mode === 'yesno' ? questionOrOptions : null,
+                    rawOptions: mode === 'custom' ? questionOrOptions : null,
+                    decisionDetail: resultText
+                });
+            
+                return true;
+            }
+            
+            function openDecideModal() {
+                if (decideModalVisible) return;
+                refreshDecideWhomList();
+                document.getElementById('decideModal').classList.remove('hidden');
+                decideModalVisible = true;
+                document.getElementById('decideYesNoPanel').style.display = 'block';
+                document.getElementById('decideCustomPanel').style.display = 'none';
+                const tabYes = document.getElementById('decideTabYesNo');
+                const tabCus = document.getElementById('decideTabCustom');
+                tabYes.classList.add('active');
+                tabCus.classList.remove('active');
+            }
+            
+            // ======================= 决定历史记录功能 =======================
+            const DECIDE_HISTORY_KEY = 'xiayi_decide_history';
+            const MAX_HISTORY_SIZE = 100;
+            
+            function saveDecideHistory(record) {
+                let history = getDecideHistory();
+                history.unshift({
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    ...record,
+                    timestamp: Date.now()
+                });
+                if (history.length > MAX_HISTORY_SIZE) history = history.slice(0, MAX_HISTORY_SIZE);
+                localStorage.setItem(DECIDE_HISTORY_KEY, JSON.stringify(history));
+            }
+            
+            function getDecideHistory() {
+                const raw = localStorage.getItem(DECIDE_HISTORY_KEY);
+                if (!raw) return [];
+                try {
+                    return JSON.parse(raw);
+                } catch(e) {
+                    return [];
+                }
+            }
+            
+            function clearDecideHistory() {
+                localStorage.removeItem(DECIDE_HISTORY_KEY);
+            }
+            
+            function showDecideHistoryModal() {
+                const history = getDecideHistory();
+                const modal = document.createElement('div');
+                modal.className = 'modal';
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 560px; max-height: 80vh;">
+                        <div class="settings-title">
+                            <i class="fa-solid fa-clock-rotate-left"></i> 决定历史记录
+                            <span style="font-size: 13px; margin-left: 8px; color: var(--text-secondary);">${history.length} 条</span>
+                        </div>
+                        <div id="historyListDecide" style="max-height: 55vh; overflow-y: auto; margin: 16px 0;">
+                            ${history.length === 0 ? '<div class="data-note" style="text-align:center;">暂无决定记录</div>' : ''}
+                        </div>
+                        <div class="button-group" style="justify-content: space-between;">
+                            <button class="sec-btn sec-btn-outline" id="clearDecideHistoryBtn">清空全部记录</button>
+                            <button class="sec-btn" id="closeDecideHistoryBtn">关闭</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            
+                const container = modal.querySelector('#historyListDecide');
+                if (history.length > 0) {
+                    let html = '';
+                    history.forEach(rec => {
+                        const date = new Date(rec.timestamp);
+                        const timeStr = `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`;
+                        
+                        let resultDisplay = rec.resultText || rec.decisionDetail;
+                        if (!resultDisplay || resultDisplay.trim() === '') {
+                            if (rec.mode === 'yesno') resultDisplay = '决定结果：是/否';
+                            else if (rec.mode === 'custom') resultDisplay = '请查看选项';
+                            else resultDisplay = '结果未知';
+                        }
+                        
+                        html += `
+                            <div class="letter-card" style="margin-bottom: 12px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center;">
+                                    <strong><i class="fa-solid fa-dice-d6"></i> ${escapeHtml(rec.deciderName)}</strong>
+                                    <span style="font-size: 11px; color: var(--text-tertiary);">${timeStr}</span>
+                                </div>
+                                <div style="margin: 8px 0 4px 0; font-size: 14px;">
+                                    <span style="opacity: 0.7;">📝 问题/选项：</span>${escapeHtml(rec.requestPreview)}
+                                </div>
+                                <div style="margin-top: 6px; background: var(--accent-light); padding: 6px 10px; border-radius: 16px;">
+                                    <span>✨ 抽取结果：</span>${escapeHtml(resultDisplay)}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }
+            
+                modal.querySelector('#closeDecideHistoryBtn').onclick = () => modal.remove();
+                modal.querySelector('#clearDecideHistoryBtn').onclick = () => {
+                    if (confirm('确定清空所有决定历史记录吗？')) {
+                        clearDecideHistory();
+                        modal.remove();
+                        showDecideHistoryModal();  
+                    }
+                };
+                modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); });
+            }
+            
+            function closeDecideModal() {
+                document.getElementById('decideModal').classList.add('hidden');
+                decideModalVisible = false;
+            }
+            
             function bindMenuButtons() {
                 const quoteBtn = document.getElementById('menuQuoteBtn');
                 const deleteBtn = document.getElementById('menuDeleteBtn');
@@ -8588,82 +8882,149 @@
                             handleMessageLongPress(msg, e); } }); }
             
             let statusList = [],
-                statusUpdateInterval = null,
-                countdownInterval = null,
-                nextStatusUpdateTime = null;
+                statusRotationTimer = null,
+                moodList = [],
+                weatherList = [];
             const DEFAULT_STATUSES = ["✨ 此刻心里有你", "🌙 正在想念你", "🌸 温柔且坚定", "💜 想听你的声音", "🌟 今天也是好天气", "🍃 风里有你的气息",
             "🎐 等你发来消息", "💭 思绪飘向你那边"];
+            const DEFAULT_MOODS = ["😊 开心", "🥺 思念", "😌 平静", "🥰 心动", "😴 疲惫", "🤗 想你", "🌸 温柔", "💗 甜蜜", "✨ 期待", "☕ 惬意", "🌊 宁静", "🍃 治愈", "💭 思绪"];
+            const DEFAULT_WEATHERS = ["☀️ 晴天", "🌤️ 多云", "🌧️ 雨天", "⛅ 微风", "🌙 星空", "🌸 花开", "🍂 落叶", "❄️ 初雪"];
 
-            function setNextStatusUpdateTime() { nextStatusUpdateTime = Date.now() + 7200000;
-                localStorage.setItem(STORAGE.statusNextUpdate, nextStatusUpdateTime); }
+            function loadMoodList() {
+                try {
+                    const saved = localStorage.getItem('xiayi_mood_list');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length) moodList = parsed;
+                    }
+                } catch(e) {}
+                if (!moodList.length) moodList = [...DEFAULT_MOODS];
+                saveMoodList();
+            }
+            function saveMoodList() { localStorage.setItem('xiayi_mood_list', JSON.stringify(moodList)); }
 
-            function loadStatusList() { try { const s = localStorage.getItem(STORAGE.statusList); if (s) statusList = JSON.parse(
-                    s); if (!Array.isArray(statusList) || !statusList.length) statusList = [...DEFAULT_STATUSES]; } catch (e) { statusList =
-                        [...DEFAULT_STATUSES]; }
-                saveStatusList(); }
+            function loadWeatherList() {
+                try {
+                    const saved = localStorage.getItem('xiayi_weather_list');
+                    if (saved) {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed) && parsed.length) weatherList = parsed;
+                    }
+                } catch(e) {}
+                if (!weatherList.length) weatherList = [...DEFAULT_WEATHERS];
+                saveWeatherList();
+            }
+            function saveWeatherList() { localStorage.setItem('xiayi_weather_list', JSON.stringify(weatherList)); }
 
-            function saveStatusList() { localStorage.setItem(STORAGE.statusList, JSON.stringify(statusList.map(t => t.replace(/[<>]/g,
-                    '')))); }
+            function loadStatusList() {
+                try {
+                    const s = localStorage.getItem(STORAGE.statusList);
+                    if (s) statusList = JSON.parse(s);
+                    if (!Array.isArray(statusList) || !statusList.length) statusList = [...DEFAULT_STATUSES];
+                } catch(e) { statusList = [...DEFAULT_STATUSES]; }
+                saveStatusList();
+            }
+            function saveStatusList() { localStorage.setItem(STORAGE.statusList, JSON.stringify(statusList.map(t => t.replace(/[<>]/g, '')))); }
 
-            function getRandomStatus() { return statusList.length ? statusList[Math.floor(Math.random() * statusList.length)] :
-                    "✨ 静静待着也很美好"; }
-
-            function updateStatusUI(txt) { document.getElementById('dynamicStatusText').innerText = txt;
-                localStorage.setItem(STORAGE.currentStatusText, txt); }
-
-            function refreshRandomStatus() { updateStatusUI(getRandomStatus()); }
-
-            function autoUpdateStatus() { if (statusList.length) { refreshRandomStatus();
-                    setNextStatusUpdateTime(); } }
-
-            function updateCountdownDisplay() { const ts = document.getElementById('statusTimerLabel'); if (!ts || !
-                    nextStatusUpdateTime) return; const rem = nextStatusUpdateTime - Date.now(); if (rem <= 0) { autoUpdateStatus();
-                    ts.innerText = "✨ 刚刚更新"; return; }
-                ts.innerText =
-                    `⏳ ${Math.floor(rem/60000).toString().padStart(2,'0')}:${Math.floor((rem%60000)/1000).toString().padStart(2,'0')}`; }
-
-            function startCountdownLoop() { if (countdownInterval) clearInterval(countdownInterval);
-                countdownInterval = setInterval(updateCountdownDisplay, 1000); }
-
-            function restartStatusTimer() { if (statusUpdateInterval) clearInterval(statusUpdateInterval);
-                statusUpdateInterval = setInterval(autoUpdateStatus, 7200000); }
-
-            function initStatusSystem() { loadStatusList(); const sn = localStorage.getItem(STORAGE.statusNextUpdate); if (sn) {
-                    nextStatusUpdateTime = Number(sn); if (Date.now() >= nextStatusUpdateTime) { refreshRandomStatus();
-                        setNextStatusUpdateTime(); } else { const st = localStorage.getItem(STORAGE.currentStatusText); if (st)
-                            updateStatusUI(st);
-                        else refreshRandomStatus(); } } else { refreshRandomStatus();
-                    setNextStatusUpdateTime(); }
-                startCountdownLoop();
-                restartStatusTimer(); }
-
-            function openStatusEditor() { const md = document.createElement('div');
-                md.className = 'modal';
-                md.innerHTML =
-                    `<div class="modal-content"><div class="settings-title"><i class="fa-solid fa-heart"></i> 状态库</div><div class="data-note" style="margin:4px 0 8px;color:var(--text-tertiary);font-size:12px;">💡 Ta 的状态每 2 小时从列表中随机更换一次</div><textarea id="statusListEditor" class="textarea-clean" rows="10">${statusList.map(s=>escapeHtml(s)).join('\n')}</textarea><div class="button-group"><button class="sec-btn" id="saveStatusListBtn">保存</button><button class="sec-btn sec-btn-outline" id="clearStatusListBtn">清空</button><button class="sec-btn sec-btn-outline" id="cancelStatusEdit">取消</button></div></div>`;
-                document.body.appendChild(md);
-                document.getElementById('saveStatusListBtn').onclick = () => { const lines = document.getElementById(
-                        'statusListEditor').value.split(/\r?\n/).filter(l => l.trim()); if (!lines.length) statusList = [
-                        ...DEFAULT_STATUSES
-                    ];
-                    else statusList = lines;
-                    saveStatusList();
-                    refreshRandomStatus();
-                    setNextStatusUpdateTime();
-                    restartStatusTimer();
-                    startCountdownLoop();
-                    md.remove(); };
-                document.getElementById('clearStatusListBtn').onclick = () => { if (confirm('确定要清空所有状态吗？')) { statusList = [];
+            function updateStatusPanel() {
+                const weatherEl = document.getElementById('weatherStatus');
+                const moodEl = document.getElementById('moodStatus');
+                const phraseEl = document.getElementById('phraseStatus');
+                if (weatherEl) {
+                    const text = weatherList.length ? weatherList[Math.floor(Math.random() * weatherList.length)] : '☀️ 默认晴天';
+                    weatherEl.innerText = text;
+                }
+                if (moodEl) {
+                    const text = moodList.length ? moodList[Math.floor(Math.random() * moodList.length)] : '😊 默认开心';
+                    moodEl.innerText = text;
+                }
+                if (phraseEl) {
+                    const text = statusList.length ? statusList[Math.floor(Math.random() * statusList.length)] : '✨ 默认温柔';
+                    phraseEl.innerText = text;
+                }
+            }
+            
+            function startStatusRotation() {
+                if (statusRotationTimer) clearTimeout(statusRotationTimer);
+                const scheduleNext = () => {
+                    updateStatusPanel();
+                    const minutes = 15 + Math.random() * 30;
+                    const nextDelay = minutes * 60 * 1000;
+                    statusRotationTimer = setTimeout(scheduleNext, nextDelay);
+                };
+                scheduleNext();
+            }
+            
+            function stopStatusRotation() {
+                if (statusRotationTimer) {
+                    clearTimeout(statusRotationTimer);
+                    statusRotationTimer = null;
+                }
+            }
+            
+            function openStatusEditor() {
+                const modalDiv = document.createElement('div');
+                modalDiv.className = 'modal';
+                modalDiv.innerHTML = `
+                    <div class="modal-content" style="max-width:560px;">
+                        <div class="settings-title"><i class="fa-solid fa-heart"></i> 状态库 · 三合一管理</div>
+                        <div class="data-note" style="margin:4px 0 8px;color:var(--text-tertiary);font-size:12px;">💡 天气、心情、状态随机更换</div>
+                        <div style="margin-bottom:12px;">
+                            <div style="font-weight:600;margin-bottom:6px;">🌤️ 天气</div>
+                            <textarea id="weatherListEditor" class="textarea-clean" rows="6">${weatherList.map(s=>escapeHtml(s)).join('\n')}</textarea>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <div style="font-weight:600;margin-bottom:6px;">😊 心情</div>
+                            <textarea id="moodListEditor" class="textarea-clean" rows="6">${moodList.map(s=>escapeHtml(s)).join('\n')}</textarea>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <div style="font-weight:600;margin-bottom:6px;">✨ 状态</div>
+                            <textarea id="statusListEditor" class="textarea-clean" rows="6">${statusList.map(s=>escapeHtml(s)).join('\n')}</textarea>
+                        </div>
+                        <div class="button-group">
+                            <button class="sec-btn" id="saveStatusListBtn">保存全部</button>
+                            <button class="sec-btn sec-btn-outline" id="cancelStatusEdit">取消</button>
+                            <button class="sec-btn danger" id="clearAllStatusBtn" style="background: var(--danger-bg); color: var(--danger-color);">🧹 清空全部</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modalDiv);
+                document.getElementById('saveStatusListBtn').onclick = () => {
+                    const newWeather = document.getElementById('weatherListEditor').value.split(/\r?\n/).filter(l=>l.trim());
+                    const newMood = document.getElementById('moodListEditor').value.split(/\r?\n/).filter(l=>l.trim());
+                    const newStatus = document.getElementById('statusListEditor').value.split(/\r?\n/).filter(l=>l.trim());
+                    if (newWeather.length) { weatherList = newWeather; saveWeatherList(); }
+                    if (newMood.length) { moodList = newMood; saveMoodList(); }
+                    if (newStatus.length) { statusList = newStatus; saveStatusList(); }
+                    else if (!newStatus.length && statusList.length === 0) { statusList = [...DEFAULT_STATUSES]; saveStatusList(); }
+                    updateStatusPanel();
+                    modalDiv.remove();
+                };
+                document.getElementById('cancelStatusEdit').onclick = () => modalDiv.remove();
+                document.getElementById('clearAllStatusBtn').onclick = () => {
+                    if (confirm('⚠️ 确定要清空所有天气、心情、状态吗？\n清空后顶部状态栏将显示默认占位，您可以随时重新添加。')) {
+                        weatherList = [];
+                        moodList = [];
+                        statusList = [];
+                        saveWeatherList();
+                        saveMoodList();
                         saveStatusList();
-                        refreshRandomStatus();
-                        setNextStatusUpdateTime();
-                        restartStatusTimer();
-                        startCountdownLoop();
-                        document.getElementById('statusListEditor').value = ''; } };
-                document.getElementById('cancelStatusEdit').onclick = () => md.remove(); }
-
-            function cleanupStatusTimers() { if (statusUpdateInterval) clearInterval(statusUpdateInterval); if (countdownInterval)
-                    clearInterval(countdownInterval); if (letterTimer) clearInterval(letterTimer); }
+                        document.getElementById('weatherListEditor').value = '';
+                        document.getElementById('moodListEditor').value = '';
+                        document.getElementById('statusListEditor').value = '';
+                        updateStatusPanel();
+                        alert('✅ 已清空全部状态库，顶部状态栏将显示默认占位。');
+                    }
+                };
+            }
+            
+            function initStatusSystem() {
+                loadStatusList();
+                loadMoodList();
+                loadWeatherList();
+                updateStatusPanel();
+                startStatusRotation();
+            }
 
             function saveLastActiveTime() { localStorage.setItem(STORAGE.lastActiveTime, Date.now().toString()); }
 
@@ -8775,7 +9136,7 @@
 
             window.addEventListener('beforeunload', () => { saveLastActiveTime();
                 updateLastOnlineTime();
-                cleanupStatusTimers();
+                stopStatusRotation();
                 stopActiveTalkTimer();
                 stopMomentsGenerator(); if (audioPlayer) audioPlayer.pause();
                 saveMessagesImmediately(); });
@@ -8870,7 +9231,7 @@
                 targetMessages.forEach(msg => {
                     const text = (msg.content || '').trim();
                     if (!text) return;
-                    const segments = text.split(/[，。！？、；：\s,\.!\?;:]+/);
+                    const segments = text.split(/[，。！？、；：\s,\.\!\?;:]+/);
                     segments.forEach(seg => {
                         if (!seg || seg.length < 2) return;
                         const chars = Array.from(seg);
@@ -9293,7 +9654,7 @@
                 resetCallUI();
                 updateCallUI();
             
-                const isVideo = Math.random() < 0.5;   // 50% 视频，50% 语音
+                const isVideo = Math.random() < 0.5;   
                 callState.mode = isVideo ? 'video' : 'voice';
             
                 callState.status = 'incoming';
@@ -9666,7 +10027,7 @@
                     if (!musicList.length) return;
                     let nextIndex;
                     if (musicPlayMode === 'single') {
-                        nextIndex = (currentMusicIndex + 1) % musicList.length;
+                        nextIndex = (currentMusicIndex + 1) % musicList.length;  
                     } else {
                         nextIndex = getNextMusicIndex();
                     }
@@ -9700,10 +10061,59 @@
                         }
                     });
                 }            
+               
+                const decideBtn = document.getElementById('decideBtn');
+                if (decideBtn) decideBtn.onclick = openDecideModal;
+                document.getElementById('closeDecideModal').onclick = closeDecideModal;
+                document.getElementById('viewDecideHistoryBtn')?.addEventListener('click', () => {
+                    showDecideHistoryModal();
+                });
+                const tabYes = document.getElementById('decideTabYesNo');
+                const tabCus = document.getElementById('decideTabCustom');
+                const yesPanel = document.getElementById('decideYesNoPanel');
+                const cusPanel = document.getElementById('decideCustomPanel');
+                
+                tabYes.onclick = () => {
+                    tabYes.classList.add('active');
+                    tabCus.classList.remove('active');
+                    yesPanel.style.display = 'block';
+                    cusPanel.style.display = 'none';
+                };
+                tabCus.onclick = () => {
+                    tabCus.classList.add('active');
+                    tabYes.classList.remove('active');
+                    yesPanel.style.display = 'none';
+                    cusPanel.style.display = 'block';
+                };
+                
+                document.getElementById('decideYesNoSubmitBtn').onclick = async () => {
+                    const question = document.getElementById('decideQuestion').value.trim();
+                    if (!question) {
+                        showToast('请输入你要问的问题', '❓');
+                        return;
+                    }
+                    closeDecideModal();
+                    await sendDecideRequest(question, 'yesno', 2);
+                    document.getElementById('decideQuestion').value = '';
+                };
+                
+                document.getElementById('decideCustomSubmitBtn').onclick = async () => {
+                    const optionsRaw = document.getElementById('decideOptions').value;
+                    if (!optionsRaw.trim()) {
+                        showToast('请输入至少两个选项', '⚠️');
+                        return;
+                    }
+                    const delaySec = parseInt(document.getElementById('decideDelaySec').value) || 3;
+                    let selectCount = parseInt(document.getElementById('decideSelectCount').value) || 1;
+                    selectCount = Math.min(10, Math.max(1, selectCount));
+                    closeDecideModal();
+                    await sendDecideRequest(optionsRaw, 'custom', Math.min(15, Math.max(1, delaySec)), selectCount);
+                    document.getElementById('decideOptions').value = '';
+                };
             }
 
             async function exportChatMessages() {
-                if (!messages.length) { alert('暂无对话'); return; }
+                if (!messages || !messages.length) { alert('暂无对话'); return; }
                 
                 const imgIdSet = new Set();
                 messages.forEach(msg => {
@@ -9758,11 +10168,13 @@
                                 }
                             }
                             if (confirm(`检测到 ${importedMessages.length} 条\n确定=合并 取消=替换`)) {
-                            } else {
-                                messages = importedMessages;
-                            }
-                            saveMessagesImmediately();
-                            renderMessages();
+                            messages = [...messages, ...importedMessages];
+                            messages.sort((a, b) => a.timestamp - b.timestamp);
+                        } else {
+                            messages = importedMessages;
+                        }
+                        saveMessagesImmediately();
+                        renderMessages();
                         } catch (err) { alert('导入失败：' + err.message); }
                     };
                     reader.readAsText(f);
