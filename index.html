@@ -8086,23 +8086,40 @@
                 
                 let letterContentHtml = "";
                 if (letter.textContent) {
-                  let lines = letter.textContent.split('\n');
-                  let signatureLine = null;
-                  let bodyLines = [];
-                  for (let i = lines.length-1; i >= 0; i--) {
-                    if (lines[i].trim().startsWith('——') && !signatureLine) {
-                      signatureLine = lines[i].trim();
-                    } else {
-                      bodyLines.unshift(lines[i]);
+                    let lines = letter.textContent.split('\n');
+                    let signatureLine = null;
+                    let greetingLine = null;          // 存放称呼行
+                    let bodyLines = [];
+            
+                    // 从后往前分离签名行（以“——”开头）
+                    for (let i = lines.length-1; i >= 0; i--) {
+                        if (lines[i].trim().startsWith('——') && !signatureLine) {
+                            signatureLine = lines[i].trim();
+                        } else {
+                            bodyLines.unshift(lines[i]);
+                        }
                     }
-                  }
-                  let bodyHtml = bodyLines.join('\n').replace(/\n/g, '<br>');
-                  letterContentHtml = `<div style="white-space: pre-wrap; line-height:1.8;">${escapeHtml(bodyHtml)}</div>`;
-                  if (signatureLine) {
-                    letterContentHtml += `<div style="margin-top: 24px; text-align: right; font-style: italic; padding-right: 8px;">${escapeHtml(signatureLine)}</div>`;
-                  } else {
-                    letterContentHtml = `<div style="white-space: pre-wrap; line-height:1.8;">${escapeHtml(letter.textContent)}</div>`;
-                  }
+            
+                    // 提取称呼行：以“亲爱的”开头且以逗号/冒号/句号结尾
+                    if (bodyLines.length > 0) {
+                        const firstLine = bodyLines[0].trim();
+                        if (firstLine.startsWith('亲爱的') && /[，,。：:]$/.test(firstLine)) {
+                            greetingLine = bodyLines.shift();   // 从正文中移除，单独处理
+                        }
+                    }
+            
+                    let bodyHtml = bodyLines.join('\n').replace(/\n/g, '<br>');
+            
+                    // 构建HTML：称呼独立一段 + 正文 + 签名
+                    if (greetingLine) {
+                        letterContentHtml += `<div style="font-weight: 500; margin-bottom: 16px; line-height: 1.6;">${escapeHtml(greetingLine)}</div>`;
+                    }
+                    if (bodyHtml.trim()) {
+                        letterContentHtml += `<div style="white-space: pre-wrap; line-height: 1.8; margin-bottom: 16px;">${escapeHtml(bodyHtml)}</div>`;
+                    }
+                    if (signatureLine) {
+                        letterContentHtml += `<div style="margin-top: 16px; text-align: right; font-style: italic; padding-right: 8px;">${escapeHtml(signatureLine)}</div>`;
+                    }
                 } else if (letter.sentences && letter.sentences.length) {
                     letterContentHtml = letter.sentences.map(s =>
                         `<div style="margin-bottom:12px;line-height:1.8;white-space:pre-wrap;">${escapeHtml(s)}</div>`
@@ -8115,7 +8132,7 @@
                     for (let msg of letter.replyMessages) {
                         if (msg.type !== 'text') continue;
                         if (msg.isSignature) {
-                          replyContentHtml += `<div style="margin-top: 20px; margin-right: 12px; text-align: right; font-style: italic;">${escapeHtml(msg.content)}</div>`;
+                            replyContentHtml += `<div style="margin-top: 20px; margin-right: 12px; text-align: right; font-style: italic;">${escapeHtml(msg.content)}</div>`;
                         } else {
                             replyContentHtml += `<div style="line-height: 1.8; margin-bottom: 6px;">${escapeHtml(msg.content)}</div>`;
                         }
