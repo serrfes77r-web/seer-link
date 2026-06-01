@@ -7978,23 +7978,205 @@
                         'messageInput').value += b.innerText;
                     modal.remove(); });
                 document.getElementById('closeEmojiPanel').onclick = () => modal.remove(); }
-            async function openImagePicker() { const modal = document.createElement('div');
+            async function openImagePicker() {
+                const modal = document.createElement('div');
                 modal.className = 'modal';
-                modal.innerHTML =
-                    `<div class="modal-content"><div class="settings-title"><i class="fa-regular fa-image"></i> 选择图片</div><div id="pickerGridContainer" class="picker-grid"></div><button class="sec-btn" id="closePickerModal">取消</button></div>`;
-                document.body.appendChild(modal); const render = async () => { const c = document.getElementById(
-                    'pickerGridContainer'); if (!c) return; if (!imgCardList.length) { c.innerHTML =
-                        '<div style="grid-column:1/-1;text-align:center;">暂无图片</div>'; return; }
-                    c.innerHTML = ''; for (const img of imgCardList) { const d = document.createElement('div');
-                        d.className = 'picker-img-item';
-                        d.dataset.url = img.url; let du = img.url; if (isImgIdRef(img.url)) du = await resolveImageUrl(img
-                            .url) || img.url;
-                        d.innerHTML = `<img src="${du}" alt=""><span>发送</span>`;
-                        d.addEventListener('click', () => { sendImageMessage(img.url);
-                            modal.remove(); });
-                        c.appendChild(d); } }; await render();
-                document.getElementById('closePickerModal').onclick = () => modal.remove(); }
-
+                modal.innerHTML = `
+                    <div class="modal-content" style="max-width: 600px;">
+                        <div class="settings-title"><i class="fa-regular fa-image"></i> 选择图片</div>
+                        <div id="pickerGridContainer" class="picker-grid" style="max-height: 55vh; overflow-y: auto;"></div>
+                        <!-- 普通模式底部按钮 -->
+                        <div id="normalButtons" style="display: flex; gap: 12px; margin-top: 12px; justify-content: space-between; flex-wrap: wrap;">
+                            <button id="batchDeleteBtn" class="sec-btn sec-btn-outline"><i class="fa-regular fa-trash-can"></i> 批量删除</button>
+                            <button id="saveToGalleryBtn" class="sec-btn" style="background: var(--accent-color); color: white;"><i class="fa-solid fa-folder-plus"></i> 保存到图库</button>
+                            <button id="sendOnlyBtn" class="sec-btn" style="background: #10b981; color: white;"><i class="fa-solid fa-paper-plane"></i> 仅发送</button>
+                            <button id="closePickerModal" class="sec-btn sec-btn-outline">取消</button>
+                        </div>
+                        <!-- 批量模式底部按钮 -->
+                        <div id="batchButtons" style="display: none; gap: 12px; margin-top: 12px; justify-content: space-between;">
+                            <button id="confirmBatchDeleteBtn" class="sec-btn" style="background: var(--danger-color); color: white;"><i class="fa-regular fa-trash-can"></i> 确认删除</button>
+                            <button id="exitBatchModeBtn" class="sec-btn sec-btn-outline">退出批量</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            
+                let batchMode = false;
+                const selectedImgIds = new Set();
+            
+                const renderPickerGrid = async () => {
+                    const container = document.getElementById('pickerGridContainer');
+                    if (!container) return;
+                    if (!imgCardList.length) {
+                        container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-secondary);">暂无图片，点击「保存到图库」添加</div>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    for (const img of imgCardList) {
+                        const div = document.createElement('div');
+                        div.className = 'picker-img-item';
+                        div.dataset.id = img.id;
+                        div.dataset.url = img.url;
+                        let du = img.url;
+                        if (isImgIdRef(img.url)) du = await resolveImageUrl(img.url) || img.url;
+            
+                        if (batchMode) {
+                            const isSelected = selectedImgIds.has(img.id);
+                            div.style.border = isSelected ? '3px solid var(--accent-color)' : '1px solid var(--border-light)';
+                            div.style.backgroundColor = isSelected ? 'var(--accent-light)' : '';
+                            div.style.transition = '0.1s';
+                            div.innerHTML = `<img src="${du}" alt=""><span>${isSelected ? '' : ''}</span>`;
+                            div.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if (selectedImgIds.has(img.id)) selectedImgIds.delete(img.id);
+                                else selectedImgIds.add(img.id);
+                                renderPickerGrid();
+                            });
+                        } else {
+                            div.innerHTML = `<img src="${du}" alt=""><span></span>`;
+                            div.addEventListener('click', () => {
+                                sendImageMessage(img.url);
+                                modal.remove();
+                            });
+                        }
+                        container.appendChild(div);
+                    }
+                };
+            
+                const refreshUI = () => {
+                    const normalDiv = document.getElementById('normalButtons');
+                    const batchDiv = document.getElementById('batchButtons');
+                    if (batchMode) {
+                        normalDiv.style.display = 'none';
+                        batchDiv.style.display = 'flex';
+                    } else {
+                        normalDiv.style.display = 'flex';
+                        batchDiv.style.display = 'none';
+                    }
+                    renderPickerGrid();
+                };
+            
+                const enterBatchMode = () => {
+                    batchMode = true;
+                    selectedImgIds.clear();
+                    refreshUI();
+                };
+            
+                const exitBatchMode = () => {
+                    batchMode = false;
+                    selectedImgIds.clear();
+                    refreshUI();
+                };
+            
+                const confirmBatchDelete = async () => {
+                    if (selectedImgIds.size === 0) {
+                        alert('请至少点击选择一张图片');
+                        return;
+                    }
+                    if (!confirm(`确定要删除 ${selectedImgIds.size} 张图片吗？\n删除后无法恢复。`)) return;
+            
+                    const toDelete = imgCardList.filter(img => selectedImgIds.has(img.id));
+                    for (const img of toDelete) {
+                        if (isImgIdRef(img.url)) {
+                            const imgId = extractImgId(img.url);
+                            if (imgId) await deleteImageFromDB(imgId);
+                            avatarCache.delete(img.url);
+                        }
+                    }
+                    imgCardList = imgCardList.filter(img => !selectedImgIds.has(img.id));
+                    saveImgCards();
+            
+                    exitBatchMode();
+                    showToast(`已删除 ${toDelete.length} 张图片`, '🗑️');
+                };
+            
+                // 通用批量处理函数
+                const processMultipleFiles = async (files, onFileProcessed, successMessage) => {
+                    if (!files.length) return;
+                    let processed = 0;
+                    let errors = 0;
+                    for (const file of files) {
+                        try {
+                            const rawBase64 = await new Promise((resolve) => {
+                                const reader = new FileReader();
+                                reader.onload = (ev) => resolve(ev.target.result);
+                                reader.readAsDataURL(file);
+                            });
+                            const compressed = await compressImage(rawBase64, 1024, 0.8);
+                            const imgId = makeImgId();
+                            await saveImageToDB(imgId, compressed);
+                            const imgRef = IMG_ID_PREFIX + imgId;
+                            avatarCache.set(imgRef, compressed);
+                            await onFileProcessed(imgRef);
+                            processed++;
+                        } catch (err) {
+                            errors++;
+                            console.error(err);
+                        }
+                    }
+                    await renderPickerGrid();
+                    if (errors === 0) showToast(successMessage.replace('{n}', processed), '✅');
+                    else showToast(`完成 ${processed} 张，失败 ${errors} 张`, '⚠️');
+                };
+            
+                // 保存到图库（不发送）
+                const saveToGalleryOnly = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.multiple = true;
+                    input.onchange = async (e) => {
+                        const files = Array.from(e.target.files);
+                        if (!files.length) return;
+                        const btn = document.getElementById('saveToGalleryBtn');
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 保存中...';
+                        btn.disabled = true;
+            
+                        await processMultipleFiles(files, async (imgRef) => {
+                            imgCardList.push({ id: Date.now() + Math.random(), url: imgRef });
+                            saveImgCards();
+                        }, `已保存 {n} 张图片到图库`);
+            
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    };
+                    input.click();
+                };
+            
+                // 仅发送（不保存到图库）
+                const sendOnly = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = 'image/*';
+                    input.multiple = true;
+                    input.onchange = async (e) => {
+                        const files = Array.from(e.target.files);
+                        if (!files.length) return;
+                        const btn = document.getElementById('sendOnlyBtn');
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> 发送中...';
+                        btn.disabled = true;
+            
+                        await processMultipleFiles(files, async (imgRef) => {
+                            sendImageMessage(imgRef);
+                        }, `已发送 {n} 张图片`);
+            
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    };
+                    input.click();
+                };
+            
+                document.getElementById('batchDeleteBtn').onclick = enterBatchMode;
+                document.getElementById('saveToGalleryBtn').onclick = saveToGalleryOnly;
+                document.getElementById('sendOnlyBtn').onclick = sendOnly;
+                document.getElementById('closePickerModal').onclick = () => modal.remove();
+                document.getElementById('confirmBatchDeleteBtn').onclick = confirmBatchDelete;
+                document.getElementById('exitBatchModeBtn').onclick = exitBatchMode;
+            
+                await renderPickerGrid();
+            }
             function showMemberSelectorForLetter() { const modal = document.createElement('div');
                 modal.className = 'modal'; const members = groupMembers.filter(m => m.enabled); if (members.length === 0) { alert(
                         '没有可用的群成员，请先启用成员');
@@ -12732,8 +12914,7 @@
                         0; i < count; i++) { generateRandomMoment('meng'); } }
                 updateMomentsBadge();
                 loadMusicList();
-                initAudioPlayer(); if (musicList.length && localStorage.getItem(STORAGE.currentMusicIndex)) { const idx = parseInt(
-                        localStorage.getItem(STORAGE.currentMusicIndex)); if (musicList[idx]) playMusic(idx); }
+                initAudioPlayer();
                 window.addEventListener('resize', handleResize);
                 window.addEventListener('orientationchange', () => setTimeout(setAppHeight, 30));
                 scrollToBottom();
