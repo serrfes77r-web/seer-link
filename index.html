@@ -3983,8 +3983,8 @@
             padding: 10px 6px;
         }
         .size-small .call-mini-avatar {
-            width: 45px;
-            height: 45px;
+            width: 36px;
+            height: 36px;
             margin-top: 6px;
         }
         .size-small .call-mini-name {
@@ -4012,9 +4012,9 @@
             padding: 14px 8px;
         }
         .size-standard .call-mini-avatar {
-            width: 60px;
-            height: 60px;
-            margin-top: 8px;
+            width: 36px;
+            height: 36px;
+            margin-top: 6px;
         }
         .size-standard .call-mini-name {
             font-size: 14px;
@@ -4042,9 +4042,9 @@
             padding: 18px 10px;
         }
         .size-large .call-mini-avatar {
-            width: 75px;
-            height: 75px;
-            margin-top: 10px;
+            width: 36px;
+            height: 36px;
+            margin-top: 6px;
         }
         .size-large .call-mini-name {
             font-size: 16px;
@@ -4119,31 +4119,31 @@
             width: auto;                 
             height: auto;               
             flex-direction: row;     
-            gap: 12px;
-            padding: 8px 16px;
+            gap: 8px;
+            padding: 6px 12px;
             border-radius: 30px;
             background: var(--card-bg);
             backdrop-filter: blur(18px);
             border: 1px solid var(--border-light);
         }
         .size-file2 .call-mini-avatar {
-            width: 28px;
-            height: 28px;
+            width: 24px;
+            height: 24px;
             margin: 0;
         }
         .size-file2 .call-mini-name {
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 600;
             white-space: nowrap;
         }
         .size-file2 .call-mini-timer {
-            font-size: 10px;
+            font-size: 9px;
             color: #10b981;
         }
         .size-file2 .call-mini-hangup {
-            width: 28px;
-            height: 28px;
-            font-size: 10px;
+            width: 18px;
+            height: 18px;
+            font-size: 7px;
         }
         .size-file2 .call-mini-info {
             text-align: left;
@@ -4151,7 +4151,7 @@
         }
         .size-file2 .call-mini-actions {
             margin-top: 0;
-            gap: 8px;
+            gap: 6px;
         }
         /* 统一范围滑块样式（与管理面板滑块保持一致） */
         .range-slider {
@@ -4221,22 +4221,22 @@
         body[data-theme="night"] .moment-card .moment-content {
             color: #fff9e6 !important;      /* 温暖的米白色 */
             text-shadow: 0 1px 1px rgba(0,0,0,0.3);
-        }
-        
+        }        
         /* 评论输入框在深色主题下优化 */
         body[data-theme="night"] .comment-input-row input {
             color: #ffffff;
             background: rgba(30, 30, 40, 0.8);
             border: 1px solid rgba(255,255,200,0.3);
-        }
-        
+        }        
         body[data-theme="night"] .comment-input-row input::placeholder {
             color: #ccc;
         }
-        
-        /* 点赞按钮高亮保持红色 */
         body[data-theme="night"] .moment-action-btn.liked {
             color: #ff8a9f !important;
+        }
+        @keyframes menuFadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
@@ -8088,10 +8088,10 @@
                 if (letter.textContent) {
                     let lines = letter.textContent.split('\n');
                     let signatureLine = null;
-                    let greetingLine = null;          // 存放称呼行
+                    let greetingLine = null;
                     let bodyLines = [];
-            
-                    // 从后往前分离签名行（以“——”开头）
+                
+                    // 分离签名行
                     for (let i = lines.length-1; i >= 0; i--) {
                         if (lines[i].trim().startsWith('——') && !signatureLine) {
                             signatureLine = lines[i].trim();
@@ -8099,22 +8099,24 @@
                             bodyLines.unshift(lines[i]);
                         }
                     }
-            
-                    // 提取称呼行：以“亲爱的”开头且以逗号/冒号/句号结尾
+                
+                    // 提取称呼行
                     if (bodyLines.length > 0) {
                         const firstLine = bodyLines[0].trim();
                         if (firstLine.startsWith('亲爱的') && /[，,。：:]$/.test(firstLine)) {
-                            greetingLine = bodyLines.shift();   // 从正文中移除，单独处理
+                            greetingLine = bodyLines.shift();
                         }
                     }
-            
-                    let bodyHtml = bodyLines.join('\n').replace(/\n/g, '<br>');
-            
-                    // 构建HTML：称呼独立一段 + 正文 + 签名
+                
+                    // ✅ 关键修改：保留原始换行符，不替换成 <br>
+                    let bodyHtml = bodyLines.join('\n');
+                
+                    letterContentHtml = '';
                     if (greetingLine) {
                         letterContentHtml += `<div style="font-weight: 500; margin-bottom: 16px; line-height: 1.6;">${escapeHtml(greetingLine)}</div>`;
                     }
                     if (bodyHtml.trim()) {
+                        // 使用 pre-wrap 让浏览器自动处理换行
                         letterContentHtml += `<div style="white-space: pre-wrap; line-height: 1.8; margin-bottom: 16px;">${escapeHtml(bodyHtml)}</div>`;
                     }
                     if (signatureLine) {
@@ -11402,10 +11404,18 @@
                         initiateCall(); } else { initiateCall(); } };
                 if (callMiniWindowEl) {
                     callMiniWindowEl.addEventListener('click', function(e) {
-                        if (e.target === document.getElementById('callMiniHangup') ||
-                            document.getElementById('callMiniHangup')?.contains(e.target)) {
+                        const hangupBtn = document.getElementById('callMiniHangup');
+                        const sizeBtn = document.getElementById('callMiniSizeBtn');
+                
+                        // 排除挂断按钮
+                        if (hangupBtn && (e.target === hangupBtn || hangupBtn.contains(e.target))) {
                             return;
                         }
+                        // 排除尺寸按钮（关键修改）
+                        if (sizeBtn && (e.target === sizeBtn || sizeBtn.contains(e.target))) {
+                            return;
+                        }
+                
                         if (callState.status === 'connected' && callState.isMinimized) {
                             restoreCallFromMini();
                         }
@@ -12610,11 +12620,77 @@
                 miniWin.style.bottom = 'auto';
             }
             
-            function cycleMiniSize() {
-                const sizes = ['small', 'standard', 'large', 'file2'];
-                let idx = sizes.indexOf(currentMiniSize);
-                idx = (idx + 1) % sizes.length;
-                setMiniWindowSize(sizes[idx]);
+            function showSizeMenu() {
+                const existingMenu = document.getElementById('callSizeMenu');
+                if (existingMenu) {
+                    existingMenu.remove();
+                    return;
+                }
+            
+                const btn = document.getElementById('callMiniSizeBtn');
+                if (!btn) return;
+                const rect = btn.getBoundingClientRect();
+            
+                const sizes = [
+                    { id: 'small', label: '小', icon: 'fa-solid fa-square' },
+                    { id: 'standard', label: '标准', icon: 'fa-solid fa-square' },
+                    { id: 'large', label: '大', icon: 'fa-solid fa-square' },
+                    { id: 'file2', label: '紧凑', icon: 'fa-solid fa-compress' }
+                ];
+            
+                const menu = document.createElement('div');
+                menu.id = 'callSizeMenu';
+                menu.style.cssText = `
+                    position: fixed;
+                    background: var(--card-bg);
+                    backdrop-filter: blur(20px);
+                    border-radius: 16px;
+                    border: 1px solid var(--border-light);
+                    box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+                    padding: 4px 0;
+                    z-index: 10002;
+                    min-width: 100px;
+                    animation: menuFadeIn 0.12s ease;
+                `;
+                menu.style.left = rect.left + 'px';
+                menu.style.top = (rect.bottom + 6) + 'px';
+            
+                sizes.forEach(size => {
+                    const item = document.createElement('button');
+                    item.className = 'size-menu-item';
+                    item.innerHTML = `<i class="${size.icon}" style="width: 16px; font-size: 12px;"></i> <span style="font-size: 12px;">${size.label}</span>`;
+                    item.style.cssText = `
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                        width: 100%;
+                        padding: 6px 12px;
+                        border: none;
+                        background: transparent;
+                        color: var(--text-primary);
+                        cursor: pointer;
+                        font-size: 12px;
+                        transition: 0.08s;
+                        white-space: nowrap;
+                    `;
+                    item.onmouseenter = () => item.style.backgroundColor = 'var(--accent-light)';
+                    item.onmouseleave = () => item.style.backgroundColor = 'transparent';
+                    item.onclick = () => {
+                        setMiniWindowSize(size.id);
+                        menu.remove();
+                    };
+                    menu.appendChild(item);
+                });
+            
+                document.body.appendChild(menu);
+            
+                const closeHandler = (e) => {
+                    if (!menu.contains(e.target) && e.target !== btn) {
+                        menu.remove();
+                        document.removeEventListener('click', closeHandler);
+                    }
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
             }
             
             function bindMiniSizeButton() {
@@ -12622,7 +12698,7 @@
                 if (sizeBtn) {
                     sizeBtn.onclick = (e) => {
                         e.stopPropagation();
-                        cycleMiniSize();
+                        showSizeMenu();   
                     };
                 }
             }
