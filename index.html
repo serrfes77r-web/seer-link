@@ -12202,7 +12202,7 @@
                                             <input type="checkbox" class="group-enabled-inline" data-group-id="${group.id}" ${group.enabled !== false ? 'checked' : ''}>
                                             <span class="slider" style="width: 44px; height: 22px;"></span>
                                         </label>
-                                        <button class="small-btn danger delete-group-inline" data-group-id="${group.id}" ${group.id.startsWith('greet')||group.id.startsWith('miss')||group.id.startsWith('daily')||group.id.startsWith('cute') ? 'disabled' : ''}><i class="fa-solid fa-trash-can"></i></button>
+                                        <button class="small-btn danger delete-group-inline" data-group-id="${group.id}"><i class="fa-solid fa-trash-can"></i></button>
                                     </div>
                                     <textarea class="group-keywords-inline" data-group-id="${group.id}" rows="2" placeholder="关键词，用逗号分隔" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 12px; padding: 6px 8px; resize: vertical;">${(group.ruleKeywords || []).join(',')}</textarea>
                                 </div>
@@ -12376,6 +12376,30 @@
                             delete container._batchClickListener;
                         }
                     }
+                }
+                // 根据分组顺序重新排列字卡列表（保持组内原有相对顺序）
+                function reorganizeWordListByGroups(wordList, groupsConfig) {
+                    const groups = groupsConfig.groups;
+                    const cardToGroup = groupsConfig.cardToGroup;
+                    const groupMap = new Map();
+                    groups.forEach(g => groupMap.set(g.id, []));
+                    const ungrouped = [];
+                
+                    wordList.forEach(card => {
+                        const gid = cardToGroup[card];
+                        if (gid && groupMap.has(gid)) {
+                            groupMap.get(gid).push(card);
+                        } else {
+                            ungrouped.push(card);
+                        }
+                    });
+                
+                    let newList = [];
+                    groups.forEach(g => {
+                        newList.push(...(groupMap.get(g.id) || []));
+                    });
+                    newList.push(...ungrouped);
+                    return newList;
                 }
                 
                 function openMoveToGroupDialog(cardText) {
@@ -12618,7 +12642,7 @@
                                     <span class="slider" style="width: 44px; height: 22px;"></span>
                                   </label>
                                 </div>
-                                <button class="small-btn danger delete-group-btn" data-group-id="${group.id}" style="padding: 2px 8px; font-size: 10px;" ${group.id.startsWith('greet')||group.id.startsWith('miss')||group.id.startsWith('daily')||group.id.startsWith('cute') ? 'disabled' : ''}>删除</button>
+                                <button class="small-btn danger delete-group-btn" data-group-id="${group.id}" style="padding: 2px 8px; font-size: 10px;">删除</button>
                               </div>
                               <div>
                                 <textarea class="group-keywords" data-group-id="${group.id}" rows="2" placeholder="关键词，用逗号分隔" style="width: 100%; background: var(--bg-body); border: 1px solid var(--border-light); border-radius: 12px; padding: 6px 8px; resize: none;">${(group.ruleKeywords || []).join(',')}</textarea>
@@ -12707,6 +12731,14 @@
                     if (onClose) onClose();
                 });
                 document.getElementById('smartSaveBtn').addEventListener('click', () => {
+                    // ★ 新增：按分组顺序重排字卡列表
+                    currentWordList = reorganizeWordListByGroups(currentWordList, currentGroups);
+                    
+                    // 重排后刷新管理器界面（让用户立即看到新顺序）
+                    renderGroupTabs();
+                    renderCardList();
+                    
+                    // 保存重排后的列表 + 分组配置
                     saveWordListCallback(currentWordList);
                     saveGroupsCallback(currentGroups);
                     
@@ -12729,10 +12761,8 @@
                         }
                     }
                     
-                    alert('已同步到字卡库');
+                    alert('已按分组顺序整理字卡并保存');
                     exitBatchMode();
-                    renderGroupTabs();
-                    renderCardList();
                 });                
                 renderGroupTabs();
                 renderCardList();
