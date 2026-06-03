@@ -1542,7 +1542,7 @@
             max-width: calc(100% - 56px);
             display: flex;
             flex-direction: column;
-            align-items: flex-start;   /* 👈 这一行是新增的，防止气泡被拉伸 */
+            align-items: flex-start;   
         }
         .bubble {
             display: inline-block;
@@ -1572,7 +1572,7 @@
             border: none !important;
         }
         .message-row.me .bubble-wrapper {
-            align-items: flex-end;     /* 👈 自己发的消息右对齐且宽度自适应 */
+            align-items: flex-end;     
         }
         .msg-img {
             max-width: 30%;
@@ -1828,14 +1828,7 @@
             border-left: 4px solid var(--accent-color);
             padding-left: 12px;
             transition: border-color 0.3s ease;
-        }
-        #managePanelModal .modal-content,
-        #groupMemberPanelModal .modal-content {
-            overflow: hidden !important;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-        }
+        }        
         .textarea-clean {
             width: 100%;
             background: var(--bg-body);
@@ -1848,12 +1841,10 @@
             resize: vertical;
             font-size: 14px;
             transition: all 0.3s ease;
-            
-            /* 关键新增属性 */
-            max-height: 250px;                      /* 内容超出时滚动 */
-            overflow-y: auto;                       /* 启用滚动条 */
-            overscroll-behavior: contain;           /* 防止滚动传播到父容器 */
-            -webkit-overflow-scrolling: touch;      /* 移动端平滑滚动 */
+            max-height: 250px;                   
+            overflow-y: auto;                       
+            overscroll-behavior: contain;           
+            -webkit-overflow-scrolling: touch;     
         }
         .button-group {
             display: flex;
@@ -2837,7 +2828,6 @@
             font-size: 12px !important;
             min-width: 30px !important;
         }
-        /* 移除单独的 #activeSendBtn 背景设置，或者改为透明 */
         #activeSendBtn {
             background: transparent !important;
         }
@@ -2968,8 +2958,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
             transition: all 0.25s ease;
         }
-        
-        /* 可选：调整内部图标垂直居中 */
         .immersive-toggle i {
             font-size: 10px;
             line-height: 1;
@@ -3243,7 +3231,6 @@
             display: flex;
             gap: 6px;
         }
-        /* 朋友圈文字强制跟随主题颜色 */
         .moment-author-name,
         .moment-content,
         .moment-feeling {
@@ -3256,8 +3243,6 @@
         .moment-action-btn {
             color: var(--text-secondary) !important;
         }
-        
-        /* 提高评论区的文字对比（可选） */
         .comment-item {
             color: var(--text-primary);
         }
@@ -3527,7 +3512,6 @@
             padding: 8px 8px !important;      
             font-size: 14px !important;         
             border-radius: 20px !important;     
-            /* 若想缩小，可使用 padding: 6px 12px; font-size: 0.75rem; */
         }
         .smart-card-item.batch-selected {
             background: var(--accent-light) !important;
@@ -4079,8 +4063,6 @@
             height: 28px;
             font-size: 11px;
         }
-        
-        /* 统一内部元素样式 */
         .call-mini-avatar {
             border-radius: 50%;
             object-fit: cover;
@@ -4129,7 +4111,6 @@
         .call-mini-hangup:active {
             transform: scale(0.92);
         }
-        /* 新增：文件二水平紧凑悬浮窗样式 */
         .call-mini-window.size-file2 {
             width: auto;                 
             height: auto;               
@@ -4168,7 +4149,6 @@
             margin-top: 0;
             gap: 6px;
         }
-        /* 统一范围滑块样式（与管理面板滑块保持一致） */
         .range-slider {
             -webkit-appearance: none;
             background: transparent;
@@ -4217,13 +4197,11 @@
         .range-slider::-moz-range-thumb:active {
             transform: scale(1.15);
         }
-        /* 朋友圈卡片改为半透奶白色 */
         .moment-card {
-            background: rgba(255, 248, 225, 0.9) !important;  /* 奶白色 + 85% 不透明度 */
-            backdrop-filter: blur(4px);                         /* 可选：毛玻璃模糊 */
+            background: rgba(255, 248, 225, 0.9) !important;  
+            backdrop-filter: blur(4px);                        
             border: 1px solid rgba(255, 245, 220, 0.6) !important;
         }
-        /* ===== 朋友圈面板深色主题统一亮色文字 ===== */
         body[data-theme="night"] .moment-author-name,
         body[data-theme="night"] .moment-content,
         body[data-theme="night"] .moment-feeling,
@@ -4234,10 +4212,9 @@
         body[data-theme="night"] .moment-action-btn i,
         body[data-theme="night"] .moment-card .moment-author-name,
         body[data-theme="night"] .moment-card .moment-content {
-            color: #fff9e6 !important;      /* 温暖的米白色 */
+            color: #fff9e6 !important;     
             text-shadow: 0 1px 1px rgba(0,0,0,0.3);
         }        
-        /* 评论输入框在深色主题下优化 */
         body[data-theme="night"] .comment-input-row input {
             color: #ffffff;
             background: rgba(30, 30, 40, 0.8);
@@ -4253,7 +4230,6 @@
             from { opacity: 0; transform: translateY(-4px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-        /* 涂鸦样式 */
         .color-swatch-group .color-swatch {
             width: 36px;
             height: 36px;
@@ -4280,7 +4256,6 @@
             transform: scale(0.92);
             background: var(--accent-light);
         }
-        /* 折叠/展开按钮样式 */
         .toggle-collapse-btn {
             background: var(--accent-light);
             border: 1px solid var(--border-light);
@@ -4302,12 +4277,9 @@
         .toggle-collapse-btn i {
             transition: transform 0.25s ease;
         }
-        /* 折叠状态箭头旋转方向 */
         .toggle-collapse-btn.collapsed i {
             transform: rotate(-90deg);
         }
-        
-        /* 可折叠按钮组容器 */
         .collapsible-buttons {
             display: flex;
             align-items: center;
@@ -4315,12 +4287,9 @@
             transition: all 0.2s ease;
             overflow: hidden;
         }
-        /* 折叠时隐藏按钮组 */
         .collapsible-buttons.collapsed {
             display: none;
         }
-        
-        /* 响应式适配：手机窄屏时确保折叠按钮可见 */
         @media (max-width: 480px) {
             .toggle-collapse-btn {
                 width: 30px;
@@ -4502,7 +4471,6 @@
                 height: 36px;
             }
         }
-        /* 横向切换标签样式 */
         .doodle-tabs {
             display: flex;
             gap: 12px;
@@ -4531,7 +4499,6 @@
         .doodle-keyboard-panel.active {
             display: block;
         }
-        /* 键盘网格布局（复用原有样式） */
         .doodle-keyboard-grid {
             display: flex;
             flex-wrap: wrap;
@@ -4553,8 +4520,6 @@
             transform: scale(0.92);
             background: var(--accent-light);
         }
-        /* 横向 Tab 栏 */
-        /* 基础样式（通用） */
         .doodle-tab-bar {
             display: flex;
             gap: 6px;
@@ -4563,12 +4528,10 @@
             border-radius: 40px;
             margin: 8px 0 16px;
             border: 1px solid var(--border-light);
-            /* 窄屏时允许换行，且支持水平滚动 */
             flex-wrap: wrap;
             justify-content: center;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            /* 隐藏滚动条（可选，保持美观） */
             scrollbar-width: thin;
         }
         .doodle-tab-bar::-webkit-scrollbar {
@@ -4578,8 +4541,6 @@
             background: var(--accent-light);
             border-radius: 10px;
         }
-        
-        /* Tab 按钮基础样式 */
         .doodle-tab-btn {
             background: transparent;
             border: none;
@@ -4590,27 +4551,23 @@
             color: var(--text-secondary);
             cursor: pointer;
             transition: all 0.2s ease;
-            white-space: nowrap;   /* 防止文字换行，保持按钮紧凑 */
+            white-space: nowrap; 
         }
-        
-        /* 窄屏手机专用调整 (宽度 ≤ 480px) */
         @media (max-width: 480px) {
             .doodle-tab-bar {
                 gap: 4px;
                 padding: 6px 6px;
                 border-radius: 30px;
-                justify-content: flex-start; /* 左对齐，方便滚动 */
-                flex-wrap: nowrap;           /* 强制不换行，改为横向滚动 */
+                justify-content: flex-start;
+                flex-wrap: nowrap;         
                 overflow-x: auto;
             }
             .doodle-tab-btn {
                 padding: 5px 12px;
                 font-size: 12px;
-                flex-shrink: 0;              /* 防止按钮被压缩 */
+                flex-shrink: 0;              
             }
         }
-        
-        /* 极端窄屏（≤ 360px）进一步缩小 */
         @media (max-width: 360px) {
             .doodle-tab-btn {
                 padding: 4px 10px;
@@ -4622,8 +4579,6 @@
             color: #fff;
             box-shadow: 0 2px 8px var(--accent-glow);
         }
-        
-        /* 面板容器：默认隐藏，只有 active 才显示 */
         .tab-panel {
             display: none;
             animation: fadeIn 0.2s ease;
@@ -4635,22 +4590,21 @@
             from { opacity: 0; transform: translateY(4px); }
             to   { opacity: 1; transform: translateY(0); }
         }
-        
-        /* 让原有的 .doodle-group 在面板内正常显示（去除重复边距） */
         .tab-panel .doodle-group {
             margin-top: 0;
         }
-        /* 调整原文字库内子面板高度 */
         .doodle-keyboard-panel {
             max-height: 180px;
             overflow-y: auto;
         }
-        /* 缩小涂鸦面板 → 表情面板 中的表情按钮尺寸 */
         #doodleEmojisPanel .doodle-key {
-            padding: 4px 8px;      /* 原 padding: 8px 12px */
-            font-size: 18px;       /* 可调整为 16px~20px，根据需要 */
-            min-width: 36px;       /* 原 min-width: 44px */
-            border-radius: 24px;   /* 稍圆润即可，原 30px */
+            padding: 4px 8px;    
+            font-size: 18px;       
+            min-width: 36px;       
+            border-radius: 24px;   
+        }
+        .call-mini-window {
+            touch-action: none;  
         }
     </style>
 </head>
@@ -13546,15 +13500,16 @@
 
             function maybeTriggerIncomingCall() { if (callState.status === 'idle' && Math.random() < 0.03) { handleIncomingCall(); } }
 
+            // ========== 悬浮窗拖拽 ==========
+            const callMiniWindowEl = document.getElementById('callMiniWindow');
             let isMiniDragging = false,
                 miniDragMoved = false,
                 miniDragStartX, miniDragStartY, miniStartLeft, miniStartTop;
-            let rafId = null;  
-            const callMiniWindowEl = document.getElementById('callMiniWindow');
+            
             if (callMiniWindowEl) {
-                callMiniWindowEl.addEventListener('pointerdown', function(e) {
-                    if (e.target === document.getElementById('callMiniHangup') || document.getElementById(
-                            'callMiniHangup')?.contains(e.target)) return;
+                callMiniWindowEl.addEventListener('pointerdown', (e) => {
+                    const hangupBtn = document.getElementById('callMiniHangup');
+                    if (hangupBtn && (e.target === hangupBtn || hangupBtn.contains(e.target))) return;
                     isMiniDragging = true;
                     miniDragMoved = false;
                     callMiniWindowEl.style.willChange = 'transform';
@@ -13570,33 +13525,25 @@
                     callMiniWindowEl.style.top = miniStartTop + 'px';
                     callMiniWindowEl.style.transform = 'translate(0px, 0px)';
                     callMiniWindowEl.setPointerCapture(e.pointerId);
+                    e.preventDefault();
                 });
-                window.addEventListener('pointermove', function(e) {
+           
+                window.addEventListener('pointermove', (e) => {
                     if (!isMiniDragging) return;
-                    e.preventDefault();                        
-                
-                    if (rafId) cancelAnimationFrame(rafId);
-                    rafId = requestAnimationFrame(() => {
-                        const dx = e.clientX - miniDragStartX;
-                        const dy = e.clientY - miniDragStartY;
-                
-                        if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
-                            miniDragMoved = true;
-                        }
-                        callMiniWindowEl.style.transform = `translate(${dx}px, ${dy}px)`;
-                    });
+                    e.preventDefault();
+                    const dx = e.clientX - miniDragStartX;
+                    const dy = e.clientY - miniDragStartY;
+                    if (Math.abs(dx) > 6 || Math.abs(dy) > 6) {
+                        miniDragMoved = true;
+                    }
+                    callMiniWindowEl.style.transform = `translate(${dx}px, ${dy}px)`;
                 });
-                window.addEventListener('pointerup', function(e) {
+            
+                window.addEventListener('pointerup', (e) => {
                     if (!isMiniDragging) return;
                     isMiniDragging = false;
-                
-                    if (rafId) {
-                        cancelAnimationFrame(rafId);
-                        rafId = null;
-                    }
-                
                     callMiniWindowEl.style.willChange = 'auto';
-                    callMiniWindowEl.style.transition = 'box-shadow 0.2s ease, transform 0.2s ease';
+                    callMiniWindowEl.style.transition = 'none';
                 
                     const finalLeft = miniStartLeft + (e.clientX - miniDragStartX);
                     const finalTop = miniStartTop + (e.clientY - miniDragStartY);
@@ -13608,16 +13555,20 @@
                     if (!miniDragMoved) {
                         callMiniWindowEl.style.transition = 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
                         callMiniWindowEl.style.transform = 'scale(0.9)';
+                        callMiniWindowEl.style.left = miniStartLeft + 'px';
+                        callMiniWindowEl.style.top = miniStartTop + 'px';
                         setTimeout(() => {
                             callMiniWindowEl.style.transform = 'scale(1)';
                             restoreCallFromMini();
                         }, 150);
                     } else {
-                        callMiniWindowEl.style.transition = 'left 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.2), top 0.3s cubic-bezier(0.25, 0.8, 0.25, 1.2)';
                         callMiniWindowEl.style.left = clampedLeft + 'px';
                         callMiniWindowEl.style.top = clampedTop + 'px';
                         callMiniWindowEl.style.transform = 'translate(0px, 0px)';
                     }
+                    setTimeout(() => {
+                        callMiniWindowEl.style.transition = '';
+                    }, 50);
                 
                     callMiniWindowEl.releasePointerCapture(e.pointerId);
                 });
