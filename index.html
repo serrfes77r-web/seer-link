@@ -7817,6 +7817,7 @@
                 
                 let startX = 0, startY = 0;
                 let isDrawingShape = false;
+                let isPrompting = false;            
                 let previewCanvas = document.createElement('canvas');
                 previewCanvas.width = doodleCanvas.width;
                 previewCanvas.height = doodleCanvas.height;
@@ -7846,7 +7847,7 @@
                     if (currentDoodleMode === 'text') {
                         if (isPrompting) return;
                         isPrompting = true;
-                        const text = prompt("输入文字", "✨");
+                        const text = prompt("输入文字", "");
                         if (text && doodleCtx) {
                             doodleCtx.font = 'bold 28px "Kalam", cursive';
                             doodleCtx.fillStyle = currentDoodleColor;
