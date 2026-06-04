@@ -6148,7 +6148,7 @@
                 showTypingIndicator(false);
             
                 for (const member of selectedMembers) {
-                    if (Math.random() < 0.06) {
+                    if (Math.random() < 0.05) {
                         await sendRandomDoodleAsOther(member.id);
                         continue;
                     }
@@ -6247,7 +6247,7 @@
             }
             
             async function sendMengRepliesLegacy(forceQuoteMsg = null) {
-                if (Math.random() < 0.06) {
+                if (Math.random() < 0.05) {
                     await sendRandomDoodleAsOther('meng');
                     return;
                 }
@@ -7953,8 +7953,11 @@
                     }
                     dynamicWords = [...new Set(dynamicWords)];
             
-                    const fixedWords = ['❤️', '🌸', '✨', '🥰', '💕', '抱抱', '想你', '🌙', '⭐', '需要'];
-            
+                    const fixedWords = [
+                        '❤️', '🌸', '✨', '🥰', '💕', '抱抱', '想你', '🌙', '⭐', '系统随机，可忽略',
+                        '😊', '💖', '🌹', '🍀', '🔥', '👍', '🎉', '💪', '☀️', '🌈',
+                        '晚安', '早安', '哈哈', '嗯嗯', '好的', '加油', '可爱', '棒棒'
+                    ];
                     const englishToken = getRandomEnglishToken();
             
                     let allWords = [...dynamicWords, ...fixedWords, englishToken];
