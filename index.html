@@ -4606,6 +4606,22 @@
         .call-mini-window {
             touch-action: none;  
         }
+        .pat-swipe-container {
+            scroll-snap-type: x mandatory;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            gap: 0;
+        }
+        .pat-panel {
+            flex: 0 0 100%;
+            scroll-snap-align: start;
+        }
+        .pat-dot {
+            font-size: 12px;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }    
     </style>
 </head>
 <body>
@@ -4809,6 +4825,7 @@
                 </div>
             </div>
             <div id="decideCustomPanel" style="display: none;">
+                <input type="text" id="decideCustomQuestion" class="msg-input" placeholder=" 你想问什么问题？（例如：今晚吃什么？）" style="width:100%; margin-bottom:12px;">
                 <textarea id="decideOptions" class="textarea-clean" rows="4" placeholder="每行一个选项，例如：&#10;喝奶茶&#10;喝果茶&#10;喝咖啡"></textarea>
                 <div style="display: flex; gap: 12px; align-items: center; margin: 10px 0; flex-wrap: wrap;">
                     <span style="font-size: 13px;">⏱️ 思考时间 (秒)</span>
@@ -4914,7 +4931,7 @@
     <div id="checkinModal" class="modal hidden">
         <div class="modal-content" style="max-width: 560px; max-height: 85vh; display: flex; flex-direction: column;">
             <div class="settings-title">
-                <i class="fa-regular fa-calendar-check"></i> 日程打卡 · 各自独立
+                <i class="fa-regular fa-calendar-check"></i> 每日打卡 · 各自独立
             </div>
             <!-- 成员选择器 -->
             <select id="checkinMemberSelect" class="checkin-member-select"></select>
@@ -4944,14 +4961,14 @@
                 <i class="fa-solid fa-dice-d6"></i> 随机打卡（手动）
             </button>
     
-            <!-- 添加新日程 -->
+            <!-- 添加新打卡 -->
             <div style="display: flex; gap: 8px; margin: 12px 0;">
-                <input type="text" id="newScheduleInput" class="msg-input" placeholder="添加新日程" style="flex:1;">
+                <input type="text" id="newScheduleInput" class="msg-input" placeholder="添加新打卡" style="flex:1;">
                 <button id="addScheduleBtn" class="sec-btn"><i class="fa-solid fa-plus"></i> 添加</button>
             </div>
     
-            <!-- 日程清单 -->
-            <div style="font-weight: 600; margin: 8px 0 4px;">📋 日程清单</div>
+            <!-- 打卡清单 -->
+            <div style="font-weight: 600; margin: 8px 0 4px;">📋 打卡清单</div>
             <div id="schedulesList" style="max-height: 240px; overflow-y: auto; margin-bottom: 12px;"></div>
     
             <!-- 打卡历史 -->
@@ -5358,6 +5375,24 @@
             let myMessageSoundUrl = null;
             let mengMessageSoundUrl = null;
             let patList = [];
+            let personalPatList = [];       
+            const PERSONAL_PAT_KEY = 'xiayi_personal_pat_list'; 
+            function loadPersonalPatList() {
+                const saved = localStorage.getItem(PERSONAL_PAT_KEY);
+                if (saved) {
+                    try {
+                        personalPatList = JSON.parse(saved);
+                        if (!Array.isArray(personalPatList)) personalPatList = [];
+                    } catch(e) { personalPatList = []; }
+                }
+                if (!personalPatList.length) {
+                    personalPatList = ["✨ 今天也要加油哦", "🌟 你最棒了", "💪 冲呀！", "🌸 温柔抱抱"];
+                }
+                savePersonalPatList();
+            }
+            function savePersonalPatList() {
+                localStorage.setItem(PERSONAL_PAT_KEY, JSON.stringify(personalPatList));
+            }
             const DEFAULT_PAT_LIST = ["拍了拍你的头", "拍了拍你的肩膀", "戳了戳你的脸", "轻轻拍了拍你", "捏了捏你的脸", "拍了拍你的背"];
             const DEFAULT_MEMBER_WORD_CARDS = ["你好", "在吗", "今天开心吗", "笑一笑", "一起聊聊"];
             let notificationEnabled = true;
@@ -6028,6 +6063,22 @@
                 saveMessagesImmediately();
                 appendMessageToDOM(msg);
             }
+          
+            function addSystemMessageWithIcon(content, iconClass) {
+                const msg = {
+                    id: Date.now() + Math.random(),
+                    sender: 'system',
+                    senderName: '系统',
+                    type: 'system_with_icon',
+                    content: content,
+                    iconClass: iconClass,
+                    timestamp: Date.now(),
+                    quote: null
+                };
+                messages.push(msg);
+                saveMessagesImmediately();
+                appendMessageToDOM(msg);
+            }
             function createMessageElement(msg) {
                 if (msg.type === 'call') {
                     const row = document.createElement('div');
@@ -6039,6 +6090,13 @@
                     const row = document.createElement('div');
                     row.className = 'message-row call-system-msg';
                     row.innerHTML = `<span class="call-system-msg-inner"><i class="fa-regular fa-envelope"></i> ${escapeHtml(msg.content)}</span>`;
+                    return row;
+                }
+                if (msg.type === 'system_with_icon') {
+                    const row = document.createElement('div');
+                    row.className = 'message-row call-system-msg';
+                    const iconHtml = msg.iconClass ? `<i class="${msg.iconClass}"></i>` : '<i class="fa-regular fa-bell"></i>';
+                    row.innerHTML = `<span class="call-system-msg-inner">${iconHtml} ${escapeHtml(msg.content)}</span>`;
                     return row;
                 }
                 if (msg.type === 'achievement' || msg.sender === 'system') {
@@ -6150,7 +6208,7 @@
                 showTypingIndicator(false);
             
                 for (const member of selectedMembers) {
-                    if (Math.random() < 0.05) {
+                    if (Math.random() < 0.045) {
                         await sendRandomDoodleAsOther(member.id);
                         continue;
                     }
@@ -6179,7 +6237,7 @@
                         if (hasText && (Math.random() < 0.6 || (!hasEmoji && !hasImage))) {
                             msgType = 'text';
                             content = textPool[Math.floor(Math.random() * textPool.length)];
-                            if (hasEmoji && Math.random() < 0.45) {
+                            if (hasEmoji && Math.random() < 0.3) {
                                 const emoji = emojiCardList[Math.floor(Math.random() * emojiCardList.length)];
                                 content = (Math.random() < 0.5 ? emoji + ' ' : ' ' + emoji).trim() + content;
                             }
@@ -6249,7 +6307,7 @@
             }
             
             async function sendMengRepliesLegacy(forceQuoteMsg = null) {
-                if (Math.random() < 0.05) {
+                if (Math.random() < 0.045) {
                     await sendRandomDoodleAsOther('meng');
                     return;
                 }
@@ -6322,7 +6380,7 @@
                     for (let i = 0; i < wcc; i++) {
                         let content = enabledWordCards[Math.floor(Math.random() * enabledWordCards.length)];
             
-                        if (!emojiDisabled && emojiCardList.length > 0 && Math.random() < 0.45) {
+                        if (!emojiDisabled && emojiCardList.length > 0 && Math.random() < 0.3) {
                             const emoji = emojiCardList[Math.floor(Math.random() * emojiCardList.length)];
                             const position = Math.random() < 0.5 ? 'before' : 'after';
                             if (position === 'before') {
@@ -6759,7 +6817,7 @@
                 letters.unshift(newLetter);
                 saveLetters();
                 
-                addLetterSystemMessage(`📬 收到一封来自 ${member.name} 的信件`);
+                addLetterSystemMessage(`收到一封来自 ${member.name} 的信件`);
                 showLetterFromThemNotification(newLetter);
                 checkPuzzleConditions();
             }
@@ -6782,7 +6840,6 @@
                 }, delayMs);
             }
 
-            // ==================== 收藏模块 ====================
             function loadFavorites() {
                 const raw = localStorage.getItem(STORAGE.favorites);
                 if (raw) {
@@ -7099,6 +7156,7 @@
                 mengMessageSoundUrl = localStorage.getItem(STORAGE.mengMessageSound);
                 loadNotificationSetting();
                 loadPatList();
+                loadPersonalPatList();
                 loadGroupChatSetting();
                 loadGroupMembers();
                 loadGroupMomentsSetting(); if (localStorage.getItem(STORAGE.offlineGenerated) === 'true') { localStorage.removeItem(
@@ -7314,22 +7372,19 @@
             
             function doCheckin(memberId, scheduleId, isAuto = false) {
                 const data = getMemberCheckinData(memberId);
-                const newRecord = {
-                    id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
-                    scheduleId: scheduleId,
-                    timestamp: Date.now()
-                };
+                const newRecord = { id: 'rec_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                                    scheduleId: scheduleId,
+                                    timestamp: Date.now() };
                 data.records.push(newRecord);
                 saveMemberCheckinData(memberId, data);
-                
                 if (!isAuto) {
-                    if (document.getElementById('checkinModal') && !document.getElementById('checkinModal').classList.contains('hidden')) {
-                        renderCheckinPanelUI();
-                    }
+                    renderCheckinPanelUI();
                 }
                 const schedule = data.schedules.find(s => s.id === scheduleId);
                 if (schedule) {
-                    showToast(`✅ ${getMemberNameById(memberId)} 完成了「${schedule.title}」打卡`, '📅');
+                    const memberName = getMemberNameById(memberId);
+                    addSystemMessageWithIcon(`每日打卡：${memberName} 完成了「${schedule.title}」打卡`, 'fa-regular fa-calendar-check');
+                    showToast(`✅ ${memberName} 打卡成功：${schedule.title}`, '📅');
                 }
                 if (isAuto && data.auto.enabled) {
                     scheduleNextAutoCheckin(memberId);
@@ -7390,12 +7445,15 @@
                 data.auto.enabled = enabled;
                 data.auto.minInterval = Math.max(10, Math.min(86400, minSec));
                 data.auto.maxInterval = Math.max(data.auto.minInterval, Math.min(86400, maxSec));
-                if (enabled && (!data.auto.nextTime || data.auto.nextTime <= Date.now())) {
+
+                if (enabled) {
+                    data.auto.lastDate = new Date().toDateString();
+                    saveMemberCheckinData(memberId, data);
                     scheduleNextAutoCheckin(memberId);
-                } else if (!enabled) {
+                } else {
                     data.auto.nextTime = null;
+                    saveMemberCheckinData(memberId, data);
                 }
-                saveMemberCheckinData(memberId, data);
             }
             
             function scheduleNextAutoCheckin(memberId) {
@@ -7702,7 +7760,7 @@
                 const checkinBtn = document.createElement('button');
                 checkinBtn.id = 'checkinToolbarBtn';
                 checkinBtn.className = 'icon-btn';
-                checkinBtn.title = '日程打卡';
+                checkinBtn.title = '每日打卡';
                 checkinBtn.innerHTML = '<i class="fa-regular fa-calendar-check"></i>';
                 checkinBtn.onclick = openCheckinPanel;
             
@@ -10008,13 +10066,18 @@
 
             function saveMengQuoteSetting() { localStorage.setItem(STORAGE.mengQuoteEnabled, mengQuoteEnabled); }
 
-            function saveMyMessageSound(url) { myMessageSoundUrl = url; if (url) localStorage.setItem(STORAGE.myMessageSound,
-                    url);
-                else localStorage.removeItem(STORAGE.myMessageSound); }
-
-            function saveMengMessageSound(url) { mengMessageSoundUrl = url; if (url) localStorage.setItem(STORAGE.mengMessageSound,
-                    url);
-                else localStorage.removeItem(STORAGE.mengMessageSound); }
+            function saveMyMessageSound(url) { 
+                myMessageSoundUrl = url; 
+                if (url) localStorage.setItem(STORAGE.myMessageSound, url); 
+                else localStorage.removeItem(STORAGE.myMessageSound);
+                preloadSound('me');
+            }
+            function saveMengMessageSound(url) { 
+                mengMessageSoundUrl = url; 
+                if (url) localStorage.setItem(STORAGE.mengMessageSound, url); 
+                else localStorage.removeItem(STORAGE.mengMessageSound);
+                preloadSound('meng');
+            }
 
             function saveReplyInterDelayMs(ms) { replyInterMessageDelayMs = Math.min(15000, Math.max(0, ms));
                 localStorage.setItem(STORAGE.replyInterMessageDelayMs, replyInterMessageDelayMs); }
@@ -10038,10 +10101,67 @@
                         'chatMessages'); if (chatContainer) { const statusElements = chatContainer.querySelectorAll('.msg-status');
                         statusElements.forEach(el => { el.textContent = '已读'; }); } } }
 
-            function playSound(type) { if (type !== 'me' && type !== 'meng') return; let url = type === 'me' ? myMessageSoundUrl :
-                    mengMessageSoundUrl; if (!url) return; try { const audio = new Audio(url);
-                    audio.volume = 0.5;
-                    audio.play().catch(() => {}); } catch (e) {} }
+            // ---------- 修复 iOS 音频播放（复用+预加载+解锁） ----------
+            let myAudioElement = null;
+            let mengAudioElement = null;
+            let audioUnlocked = false;
+            
+            function initAudioElements() {
+                if (!myAudioElement) {
+                    myAudioElement = new Audio();
+                    myAudioElement.volume = 0.5;
+                    myAudioElement.preload = 'auto';
+                }
+                if (!mengAudioElement) {
+                    mengAudioElement = new Audio();
+                    mengAudioElement.volume = 0.5;
+                    mengAudioElement.preload = 'auto';
+                }
+            }
+            
+            function preloadSound(type) {
+                const url = type === 'me' ? myMessageSoundUrl : mengMessageSoundUrl;
+                if (!url) return;
+                const audio = type === 'me' ? myAudioElement : mengAudioElement;
+                if (audio.src !== url) {
+                    audio.src = url;
+                    audio.load();
+                }
+            }
+            
+            function unlockAudio() {
+                if (audioUnlocked) return Promise.resolve(true);
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return Promise.resolve(false);
+                const ctx = new AudioContext();
+                const buffer = ctx.createBuffer(1, 1, 22050);
+                const src = ctx.createBufferSource();
+                src.buffer = buffer;
+                src.connect(ctx.destination);
+                src.start();
+                return ctx.resume().then(() => {
+                    audioUnlocked = true;
+                    ctx.close();
+                    return true;
+                }).catch(() => false);
+            }
+            
+            function playSound(type) {
+                if (type !== 'me' && type !== 'meng') return;
+                let url = type === 'me' ? myMessageSoundUrl : mengMessageSoundUrl;
+                if (!url) return;
+                initAudioElements();
+                const audio = type === 'me' ? myAudioElement : mengAudioElement;
+                if (audio.src !== url) {
+                    audio.src = url;
+                    audio.load();
+                }
+                audio.play().catch(err => {
+                    if (err.name === 'NotAllowedError' && !audioUnlocked) {
+                        unlockAudio().then(() => audio.play().catch(() => {}));
+                    }
+                });
+            }
 
             function stopActiveTalkTimer() { if (activeTalkInterval) { clearInterval(activeTalkInterval);
                     activeTalkInterval = null; } }
@@ -10684,35 +10804,168 @@
                 input.click();
             }
             
-            function openPatManager() { const modalDiv = document.createElement('div');
+            function openPatManager() {
+                loadPersonalPatList();  // 确保数据加载
+                const modalDiv = document.createElement('div');
                 modalDiv.className = 'modal';
-                modalDiv.innerHTML =
-                    `<div class="modal-content" style="max-width:500px;"><div class="settings-title"><i class="fa-solid fa-hand"></i> 拍一拍</div><div style="display:flex;flex-direction:column;gap:8px;"><textarea id="newPatInput" class="textarea-clean" rows="4" placeholder="每行一句，批量添加…"></textarea><button class="sec-btn" id="addPatBtn"><i class="fa-solid fa-plus"></i> 批量添加</button></div><div id="patListContainer" style="max-height:60vh;overflow-y:auto;"></div><button class="sec-btn sec-btn-outline" id="closePatModal">关闭</button></div>`;
+                modalDiv.innerHTML = `
+                    <div class="modal-content" style="max-width:560px; padding:12px;">
+                        <div class="settings-title" style="margin-bottom:12px;">
+                            <i class="fa-solid fa-hand"></i> 拍一拍 · 左右滑动切换
+                        </div>
+                        <!-- 滑动容器 -->
+                        <div class="pat-swipe-container" style="display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scroll-behavior:smooth; -webkit-overflow-scrolling:touch; gap:0;">
+                            <!-- 面板1：通用拍一拍 -->
+                            <div class="pat-panel" style="flex:0 0 100%; scroll-snap-align:start; padding:0 4px;">
+                                <div style="font-weight:600; margin-bottom:6px;">🤝 通用拍一拍 <span style="font-size:12px;">（ta/成员可能会随机使用）</span></div>
+                                <textarea id="newPatInputCommon" class="textarea-clean" rows="3" placeholder="每行一句，批量添加通用拍一拍…"></textarea>
+                                <button class="sec-btn" id="addPatBtnCommon" style="margin-bottom:12px;"><i class="fa-solid fa-plus"></i> 批量添加</button>
+                                <div id="patListContainerCommon" style="max-height:50vh; overflow-y:auto;"></div>
+                            </div>
+                            <!-- 面板2：我的专属拍一拍 -->
+                            <div class="pat-panel" style="flex:0 0 100%; scroll-snap-align:start; padding:0 4px;">
+                                <div style="font-weight:600; margin-bottom:6px;">👋 我的专属拍一拍 <span style="font-size:12px;">（仅自己可用）</span></div>
+                                <textarea id="newPatInputPersonal" class="textarea-clean" rows="3" placeholder="每行一句，批量添加专属拍一拍…"></textarea>
+                                <button class="sec-btn" id="addPatBtnPersonal" style="margin-bottom:12px;"><i class="fa-solid fa-plus"></i> 批量添加</button>
+                                <div id="patListContainerPersonal" style="max-height:50vh; overflow-y:auto;"></div>
+                            </div>
+                        </div>
+                        <!-- 页码指示器（可选） -->
+                        <div style="display:flex; justify-content:center; gap:8px; margin-top:12px;">
+                            <span class="pat-dot" data-panel="0">●</span>
+                            <span class="pat-dot" data-panel="1">○</span>
+                        </div>
+                        <button class="sec-btn sec-btn-outline" id="closePatModal" style="margin-top:16px; width:100%;">关闭</button>
+                    </div>
+                `;
                 document.body.appendChild(modalDiv);
-
-                function rp() { const c = document.getElementById('patListContainer'); if (!c) return; if (!patList.length) { c
-                        .innerHTML = '<div class="data-note">暂无</div>'; return; }
-                    c.innerHTML = patList.map((p, i) =>
-                        `<div class="music-list-item"><div class="music-info" style="cursor:pointer;" data-send-idx="${i}"><span>👋</span><div class="music-name">${escapeHtml(p)}</div></div><button class="small-btn danger" data-del-idx="${i}">删除</button></div>`
-                        ).join('');
-                    c.querySelectorAll('[data-send-idx]').forEach(el => el.addEventListener('click', () => { const idx = parseInt(
-                            el.dataset.sendIdx);
-                        sendPatMessage(patList[idx], 'me', true);
-                        modalDiv.remove(); }));
-                    c.querySelectorAll('[data-del-idx]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); if (
-                            confirm('删除？')) { patList.splice(parseInt(b.dataset.delIdx), 1);
-                            savePatList();
-                            rp(); } })); }
-                rp();
+            
+                // 渲染通用拍一拍列表
+                function renderCommonList() {
+                    const c = document.getElementById('patListContainerCommon');
+                    if (!c) return;
+                    if (!patList.length) {
+                        c.innerHTML = '<div class="data-note">暂无通用拍一拍</div>';
+                        return;
+                    }
+                    c.innerHTML = patList.map((p, i) => `
+                        <div class="music-list-item" style="margin-bottom:8px;">
+                            <div class="music-info" style="cursor:pointer;" data-send-idx="${i}" data-type="common">
+                                <span></span><div class="music-name">${escapeHtml(p)}</div>
+                            </div>
+                            <button class="small-btn danger" data-del-idx="${i}" data-type="common">删除</button>
+                        </div>
+                    `).join('');
+                    c.querySelectorAll('[data-send-idx]').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const idx = parseInt(el.dataset.sendIdx);
+                            sendPatMessage(patList[idx], 'me', true);
+                            modalDiv.remove();  // 发送后关闭面板
+                        });
+                    });
+                    c.querySelectorAll('[data-del-idx]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (confirm('删除这条通用拍一拍？')) {
+                                patList.splice(parseInt(btn.dataset.delIdx), 1);
+                                savePatList();
+                                renderCommonList();
+                            }
+                        });
+                    });
+                }
+            
+                // 渲染专属拍一拍列表
+                function renderPersonalList() {
+                    const c = document.getElementById('patListContainerPersonal');
+                    if (!c) return;
+                    if (!personalPatList.length) {
+                        c.innerHTML = '<div class="data-note">暂无专属拍一拍，添加后仅自己可用</div>';
+                        return;
+                    }
+                    c.innerHTML = personalPatList.map((p, i) => `
+                        <div class="music-list-item" style="margin-bottom:8px;">
+                            <div class="music-info" style="cursor:pointer;" data-send-idx="${i}" data-type="personal">
+                                <span></span><div class="music-name">${escapeHtml(p)}</div>
+                            </div>
+                            <button class="small-btn danger" data-del-idx="${i}" data-type="personal">删除</button>
+                        </div>
+                    `).join('');
+                    c.querySelectorAll('[data-send-idx]').forEach(el => {
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            const idx = parseInt(el.dataset.sendIdx);
+                            sendPatMessage(personalPatList[idx], 'me', true);
+                            modalDiv.remove();
+                        });
+                    });
+                    c.querySelectorAll('[data-del-idx]').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            if (confirm('删除这条专属拍一拍？')) {
+                                personalPatList.splice(parseInt(btn.dataset.delIdx), 1);
+                                savePersonalPatList();
+                                renderPersonalList();
+                            }
+                        });
+                    });
+                }
+            
+                // 批量添加通用拍一拍
+                document.getElementById('addPatBtnCommon').onclick = () => {
+                    const text = document.getElementById('newPatInputCommon').value.trim();
+                    if (!text) return;
+                    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                    if (lines.length) {
+                        patList.push(...lines);
+                        savePatList();
+                        renderCommonList();
+                        document.getElementById('newPatInputCommon').value = '';
+                    }
+                };
+                // 批量添加专属拍一拍
+                document.getElementById('addPatBtnPersonal').onclick = () => {
+                    const text = document.getElementById('newPatInputPersonal').value.trim();
+                    if (!text) return;
+                    const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                    if (lines.length) {
+                        personalPatList.push(...lines);
+                        savePersonalPatList();
+                        renderPersonalList();
+                        document.getElementById('newPatInputPersonal').value = '';
+                    }
+                };
+            
+                // 滑动时同步圆点指示器
+                const container = modalDiv.querySelector('.pat-swipe-container');
+                const dots = modalDiv.querySelectorAll('.pat-dot');
+                function updateDot() {
+                    const scrollLeft = container.scrollLeft;
+                    const panelWidth = container.clientWidth;
+                    const activeIndex = Math.round(scrollLeft / panelWidth);
+                    dots.forEach((dot, idx) => {
+                        dot.textContent = idx === activeIndex ? '●' : '○';
+                        dot.style.opacity = idx === activeIndex ? '1' : '0.5';
+                    });
+                }
+                container.addEventListener('scroll', () => requestAnimationFrame(updateDot));
+                dots.forEach((dot, idx) => {
+                    dot.style.cursor = 'pointer';
+                    dot.addEventListener('click', () => {
+                        container.scrollTo({ left: idx * container.clientWidth, behavior: 'smooth' });
+                    });
+                });
+                updateDot();
+            
+                // 关闭面板
                 document.getElementById('closePatModal').onclick = () => modalDiv.remove();
                 modalDiv.addEventListener('click', (e) => { if (e.target === modalDiv) modalDiv.remove(); });
-                document.getElementById('addPatBtn').onclick = () => { const text = document.getElementById('newPatInput').value
-                        .trim(); if (!text) return; const lines = text.split(/\r?\n/).map(line => line.trim()).filter(line => line
-                            .length > 0); if (lines.length === 0) return;
-                    patList.push(...lines);
-                    savePatList();
-                    rp();
-                    document.getElementById('newPatInput').value = ''; }; }
+            
+                // 初始渲染
+                renderCommonList();
+                renderPersonalList();
+            }
 
             function openManagePanel() { const modalDiv = document.createElement('div');
                 modalDiv.className = 'modal';
@@ -11454,7 +11707,7 @@
                 puzzleData.grid.forEach(cell => { const div = document.createElement('div');
                     div.className = `puzzle-cell${cell.completed?' unlocked':''}`;
                     div.innerHTML =
-                    `<span class="cell-icon">${cell.completed?cell.icon:'🔒'}</span><span class="cell-task">${cell.task}</span>`;
+                    `<span class="cell-icon">${cell.completed?cell.icon:''}</span><span class="cell-task">${cell.task}</span>`;
                     grid.appendChild(div); });
                 modal.querySelector('#closePuzzleModal').onclick = () => modal.remove();
                 modal.addEventListener('click', (e) => { if (e.target === modal) modal.remove(); }); }
@@ -11530,7 +11783,6 @@
             
                 let currentTab = { value: 'other' };
             
-                // 渲染其他三个面板（原有逻辑）
                 function renderWfBody() {
                     const topNEl = modal.querySelector('#wfTopN');
                     const memberSelectEl = modal.querySelector('#wfMemberSelect');
@@ -11579,7 +11831,6 @@
                     wfBody.innerHTML = statsHtml;
                 }
             
-                // 切换选项卡
                 function switchTab(tabId) {
                     currentTab.value = tabId;
                     wfBody.style.display = 'none';
@@ -11590,7 +11841,6 @@
                         if (typeof renderFavoritesList === 'function') renderFavoritesList();
                     } else if (tabId === 'search') {
                         searchBody.style.display = 'block';
-                        // 可选：清空旧结果
                         const resultContainer = modal.querySelector('#searchResultList');
                         if (resultContainer) resultContainer.innerHTML = '<div class="data-note" style="text-align:center;">输入关键词后点击搜索</div>';
                     } else {
@@ -11599,7 +11849,6 @@
                     }
                 }
             
-                // 绑定选项卡点击事件
                 modal.querySelectorAll('.wf-tab').forEach(tab => {
                     tab.addEventListener('click', () => {
                         modal.querySelectorAll('.wf-tab').forEach(t => t.classList.remove('active'));
@@ -11608,7 +11857,6 @@
                     });
                 });
             
-                // 成员选择变化时刷新
                 const memberSelectEl = modal.querySelector('#wfMemberSelect');
                 if (memberSelectEl) {
                     memberSelectEl.addEventListener('change', () => {
@@ -11616,19 +11864,16 @@
                     });
                 }
             
-                // TOP N 变化刷新
                 const topNEl = modal.querySelector('#wfTopN');
                 if (topNEl) topNEl.addEventListener('change', () => {
                     if (currentTab.value !== 'favorites' && currentTab.value !== 'search') renderWfBody();
                 });
             
-                // 刷新按钮
                 const refreshBtn = modal.querySelector('#wfRefreshBtn');
                 if (refreshBtn) refreshBtn.addEventListener('click', () => {
                     if (currentTab.value !== 'favorites' && currentTab.value !== 'search') renderWfBody();
                 });
             
-                // 复制按钮
                 const copyBtn = modal.querySelector('#wfCopyBtn');
                 if (copyBtn) {
                     copyBtn.addEventListener('click', () => {
@@ -11641,7 +11886,6 @@
                     });
                 }
             
-                // ---------- ✨ 新增搜索功能 ----------
                 function escapeRegex(str) {
                     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                 }
@@ -11685,13 +11929,12 @@
                         `;
                     });
                     container.innerHTML = html;
-                    // 绑定点击事件：跳转到对应消息
                     container.querySelectorAll('.search-result-item').forEach(el => {
                         el.addEventListener('click', () => {
                             const msgId = el.dataset.msgId;
                             const targetMsg = messages.find(m => m.id == msgId);
                             if (targetMsg) {
-                                modal.remove();  // 关闭弹窗
+                                modal.remove(); 
                                 scrollToMessage(msgId);
                             }
                         });
@@ -11710,14 +11953,12 @@
                     if (e.key === 'Enter') renderSearchResults(searchInput.value);
                 });
             
-                // 关闭弹窗
                 const closeBtn = modal.querySelector('#closeWfModal');
                 if (closeBtn) closeBtn.onclick = () => modal.remove();
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) modal.remove();
                 });
             
-                // 默认激活第一个选项卡
                 switchTab('other');
             }
 
@@ -11729,7 +11970,6 @@
                 const msgElement = document.querySelector(`.message-row[data-id="${msgId}"]`);
                 if (msgElement) {
                     msgElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // 高亮效果
                     const originalBg = msgElement.style.backgroundColor;
                     msgElement.style.backgroundColor = 'var(--accent-light)';
                     msgElement.style.transition = 'background-color 0.2s';
@@ -11737,7 +11977,6 @@
                         msgElement.style.backgroundColor = originalBg;
                     }, 1500);
                 } else {
-                    // 如果 DOM 中还没有该消息（极少情况），先重新渲染再尝试
                     renderMessages();
                     setTimeout(() => scrollToMessage(msgId), 100);
                 }
@@ -12466,7 +12705,7 @@
                 return { id: 'meng', name: profile.mengNick || 'ta' };
             }
             
-            async function sendDecideRequest(questionOrOptions, mode, delaySec = 3, selectCount = 1) {
+            async function sendDecideRequest(questionOrOptions, mode, delaySec = 3, selectCount = 1, customQuestion = null) {
                 const decider = getCurrentDecideWhom();
                 if (!decider) {
                     showToast('没有可用的决定者', '⚠️');
@@ -12474,13 +12713,13 @@
                 }
                 let userMsgText = '';
                 let replyPromise = null;
-                let resultText = '';      
-                let requestPreview = ''; 
+                let resultText = '';
+                let requestPreview = '';
             
                 if (mode === 'yesno') {
                     userMsgText = `❓ 帮我决定：${questionOrOptions}`;
                     const result = Math.random() < 0.5 ? '是' : '否';
-                    resultText = `决定结果：${result}`;
+                    resultText = `${result}`;
                     requestPreview = `【是/否】${questionOrOptions}`;
                     replyPromise = async () => {
                         await new Promise(r => setTimeout(r, delaySec * 1000));
@@ -12503,28 +12742,31 @@
                         showToast('自定义选项至少需要两个不同的选项', '⚠️');
                         return;
                     }
-                    userMsgText = `🎲 帮我从以下选项决定：\n${lines.join('\n')}`;
                     const previewOptions = lines.length > 3 ? lines.slice(0,3).join('、') + '…' : lines.join('、');
-                    requestPreview = `【自定义】${previewOptions}`;
+            
+                    if (customQuestion && customQuestion.trim()) {
+                        userMsgText = `🎲 帮我决定：${customQuestion.trim()}？\n选项如下：\n${lines.join('\n')}`;
+                        requestPreview = `【自定义】${customQuestion.trim()} (选项：${previewOptions})`;
+                    } else {
+                        userMsgText = `🎲 帮我从以下选项决定：\n${lines.join('\n')}`;
+                        requestPreview = `【自定义】${previewOptions}`;
+                    }
+            
+                    let finalCount = Math.min(selectCount, lines.length);
+                    if (finalCount < selectCount) {
+                        showToast(`⚠️ 选项总数只有 ${lines.length} 个，将抽取全部不同选项`, '🎲');
+                    }
+                    const shuffled = [...lines];
+                    for (let i = shuffled.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                    }
+                    const chosen = shuffled.slice(0, finalCount);
+                    const replyText = chosen.length === 1 ? `我选：${chosen[0]}` : `我抽中的是：${chosen.join('、')}`;
+                    resultText = `${chosen.join('、')}`;
+            
                     replyPromise = async () => {
                         await new Promise(r => setTimeout(r, delaySec * 1000));
-                        let finalCount = Math.min(selectCount, lines.length);
-                        if (finalCount < selectCount) {
-                            showToast(`⚠️ 选项总数只有 ${lines.length} 个，将抽取全部不同选项`, '🎲');
-                        }
-                        const shuffled = [...lines];
-                        for (let i = shuffled.length - 1; i > 0; i--) {
-                            const j = Math.floor(Math.random() * (i + 1));
-                            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                        }
-                        const chosen = shuffled.slice(0, finalCount);
-                        let replyText = '';
-                        if (chosen.length === 1) {
-                            replyText = `我选：${chosen[0]}`;
-                        } else {
-                            replyText = `我抽中的是：${chosen.join('、')}`;
-                        }
-                        resultText = `抽取结果：${chosen.join('、')}`;
                         if (decider.id === 'meng') {
                             addMessage('meng', replyText, 'text');
                         } else {
@@ -12543,7 +12785,7 @@
                 playSound('me');
             
                 if (replyPromise) await replyPromise();
-           
+            
                 saveDecideHistory({
                     deciderId: decider.id,
                     deciderName: decider.name,
@@ -12552,6 +12794,7 @@
                     resultText: resultText,
                     rawQuestion: mode === 'yesno' ? questionOrOptions : null,
                     rawOptions: mode === 'custom' ? questionOrOptions : null,
+                    customQuestion: (mode === 'custom' && customQuestion) ? customQuestion : null,
                     decisionDetail: resultText
                 });
             
@@ -12629,20 +12872,43 @@
                         
                         let resultDisplay = rec.resultText || rec.decisionDetail;
                         if (!resultDisplay || resultDisplay.trim() === '') {
-                            if (rec.mode === 'yesno') resultDisplay = '决定结果：是/否';
+                            if (rec.mode === 'yesno') resultDisplay = '是/否';
                             else if (rec.mode === 'custom') resultDisplay = '请查看选项';
                             else resultDisplay = '结果未知';
                         }
-                        
+            
+                        let previewHtml = '';
+                        if (rec.mode === 'custom' && rec.customQuestion) {
+                            let optionsPreview = '';
+                            if (rec.rawOptions) {
+                                const opts = rec.rawOptions.split(/\r?\n/).filter(l => l.trim());
+                                optionsPreview = opts.length > 3 ? opts.slice(0,3).join('、') + '…' : opts.join('、');
+                            } else {
+                                optionsPreview = '（无选项记录）';
+                            }
+                            previewHtml = `
+                                <div style="margin: 8px 0 4px 0; font-size: 14px;">
+                                    <span style="opacity: 0.7;">❓ 问题：</span>${escapeHtml(rec.customQuestion)}
+                                </div>
+                                <div style="margin: 4px 0 4px 0; font-size: 13px; color: var(--text-secondary);">
+                                    📝 选项：${escapeHtml(optionsPreview)}
+                                </div>
+                            `;
+                        } else {
+                            previewHtml = `
+                                <div style="margin: 8px 0 4px 0; font-size: 14px;">
+                                    <span style="opacity: 0.7;">📝 问题/选项：</span>${escapeHtml(rec.requestPreview || '未知')}
+                                </div>
+                            `;
+                        }
+            
                         html += `
                             <div class="letter-card" style="margin-bottom: 12px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center;">
                                     <strong><i class="fa-solid fa-dice-d6"></i> ${escapeHtml(rec.deciderName)}</strong>
                                     <span style="font-size: 11px; color: var(--text-tertiary);">${timeStr}</span>
                                 </div>
-                                <div style="margin: 8px 0 4px 0; font-size: 14px;">
-                                    <span style="opacity: 0.7;">📝 问题/选项：</span>${escapeHtml(rec.requestPreview)}
-                                </div>
+                                ${previewHtml}
                                 <div style="margin-top: 6px; background: var(--accent-light); padding: 6px 10px; border-radius: 16px;">
                                     <span>✨ 抽取结果：</span>${escapeHtml(resultDisplay)}
                                 </div>
@@ -12666,6 +12932,7 @@
             function closeDecideModal() {
                 document.getElementById('decideModal').classList.add('hidden');
                 decideModalVisible = false;
+                document.getElementById('decideCustomQuestion').value = '';
             }
             
             function bindMenuButtons() {
@@ -13790,7 +14057,6 @@
 
             function maybeTriggerIncomingCall() { if (callState.status === 'idle' && Math.random() < 0.03) { handleIncomingCall(); } }
 
-            // ========== 悬浮窗拖拽 ==========
             const callMiniWindowEl = document.getElementById('callMiniWindow');
             let isMiniDragging = false,
                 miniDragMoved = false,
@@ -14009,16 +14275,19 @@
                 
                 document.getElementById('decideCustomSubmitBtn').onclick = async () => {
                     const optionsRaw = document.getElementById('decideOptions').value;
-                    if (!optionsRaw.trim()) {
-                        showToast('请输入至少两个选项', '⚠️');
-                        return;
-                    }
+                    if (!optionsRaw.trim()) { showToast('请输入至少两个选项', '⚠️'); return; }
+                    
+                    const customQuestion = document.getElementById('decideCustomQuestion').value.trim();
+                    
                     const delaySec = parseInt(document.getElementById('decideDelaySec').value) || 3;
                     let selectCount = parseInt(document.getElementById('decideSelectCount').value) || 1;
                     selectCount = Math.min(10, Math.max(1, selectCount));
+                    
                     closeDecideModal();
-                    await sendDecideRequest(optionsRaw, 'custom', Math.min(15, Math.max(1, delaySec)), selectCount);
+                    await sendDecideRequest(optionsRaw, 'custom', Math.min(15, Math.max(1, delaySec)), selectCount, customQuestion);
+                    
                     document.getElementById('decideOptions').value = '';
+                    document.getElementById('decideCustomQuestion').value = '';  
                 };
                 document.getElementById('doodleBtn')?.addEventListener('click', openDoodlePanel);
                 const toggleBtn = document.getElementById('toggleCollapseBtn');
@@ -15184,7 +15453,6 @@
               });
             }
             
-            // ========== 悬浮窗尺寸管理 ==========
             let currentMiniSize = localStorage.getItem('call_mini_size') || 'standard'; // 'small', 'standard', 'large'
             
             function setMiniWindowSize(size) {
@@ -15305,6 +15573,11 @@
             window.openSmartWordManagerForMember = openSmartWordManagerForMember;
             
             window.onload = () => {
+                initAudioElements();
+                document.body.addEventListener('touchstart', function once() {
+                    unlockAudio();
+                    document.body.removeEventListener('touchstart', once);
+                }, { once: true });
                 setupLazyImageObserver();
                 setAppHeight();
                 bindMenuButtons();
@@ -15348,6 +15621,7 @@
                     overlay.addEventListener('click', () => { overlay.style.display = 'none'; }); })(); const splash = document
                     .getElementById('splashOverlay'),
                     sbtn = document.getElementById('splashEnterBtn'); if (splash && sbtn) { sbtn.addEventListener('click', () => {
+                        unlockAudio();
                         splash.classList.add('exit');
                         setTimeout(() => splash.classList.add('hidden-splash'), 800); }); } const pc = document.getElementById(
                         'splashParticles'); if (pc) { const frag = document.createDocumentFragment(); for (let i = 0; i < 22; i++) { const
