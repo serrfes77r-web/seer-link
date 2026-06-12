@@ -6790,13 +6790,11 @@
                 }
                 
                 const bodyContent = sentences.join('');   
-                
                 const myNick = profile.myNick || '我';
                 const senderName = member.name;  
                 
                 const greeting = `亲爱的${myNick}，`;
                 const signature = `—— ${senderName}`;
-                
                 const fullContent = `${greeting}\n\n${bodyContent}\n\n${signature}`;
                 
                 const newLetter = {
@@ -6815,7 +6813,14 @@
                     replyTime: null,
                 };
                 letters.unshift(newLetter);
-                saveLetters();
+                
+                // 关键修改：只有保存成功才继续后续流程
+                const saved = saveLetters();
+                if (!saved) {
+                    // 保存失败，从内存中移除这封信，避免内存与存储不一致
+                    letters = letters.filter(l => l.id !== newLetter.id);
+                    return;
+                }
                 
                 addLetterSystemMessage(`收到一封来自 ${member.name} 的信件`);
                 showLetterFromThemNotification(newLetter);
@@ -7232,6 +7237,18 @@
                 if (needsSaveLetters) {
                     saveLetters();
                 }
+                // 在 loadData 函数末尾添加（确保内存与存储一致）
+                try {
+                    const storedRaw = localStorage.getItem(STORAGE.letters);
+                    if (storedRaw) {
+                        const storedLetters = JSON.parse(storedRaw);
+                        // 如果内存中的信件数量与存储不一致，以存储为准（避免残留脏数据）
+                        if (storedLetters.length !== letters.length) {
+                            console.warn('信件数据不一致，以存储为准');
+                            letters = storedLetters;
+                        }
+                    }
+                } catch(e) { /* 忽略解析错误 */ }
             }            
             
             function syncMomentsNicknames() {
@@ -10058,8 +10075,21 @@
 
             function saveProfile() { localStorage.setItem(STORAGE.profile, JSON.stringify(profile)); }
 
-            function saveLetters() { localStorage.setItem(STORAGE.letters, JSON.stringify(letters)); }
-
+            function saveLetters() {
+                try {
+                    const serialized = JSON.stringify(letters);
+                    localStorage.setItem(STORAGE.letters, serialized);
+                    return true;
+                } catch (e) {
+                    console.error('保存信件失败:', e);
+                    if (e.name === 'QuotaExceededError') {
+                        alert('⚠️ 存储空间不足，无法保存新信件。请清理一些旧数据（如聊天记录或图片）后再试。');
+                    } else {
+                        alert('❌ 保存信件失败，请检查浏览器设置或稍后重试。');
+                    }
+                    return false;
+                }
+            }
             function saveMengIgnoreSetting() { localStorage.setItem(STORAGE.mengMaybeIgnore, mengMaybeIgnore); }
 
             function saveMengActiveTalkSetting() { localStorage.setItem(STORAGE.mengActiveTalk, mengActiveTalkEnabled); }
@@ -10645,7 +10675,8 @@
                 modal.innerHTML = `
                     <div class="modal-content" style="max-width:560px;">
                         <div class="settings-title"><i class="fa-solid fa-clock-rotate-left"></i> 信件历史</div>
-                        <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <div style="display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap;">
+                            <button class="sec-btn sec-btn-outline" id="refreshLettersBtn"><i class="fa-solid fa-rotate"></i> 刷新</button>
                             <button class="sec-btn sec-btn-outline" id="exportLettersBtn"><i class="fa-solid fa-download"></i> 导出所有信件</button>
                             <button class="sec-btn sec-btn-outline" id="importLettersBtn"><i class="fa-solid fa-upload"></i> 导入信件</button>
                         </div>
@@ -10655,12 +10686,27 @@
                 `;
                 document.body.appendChild(modal);
             
+                // 刷新按钮：从 localStorage 重新加载信件
+                document.getElementById('refreshLettersBtn').onclick = () => {
+                    try {
+                        const stored = localStorage.getItem(STORAGE.letters);
+                        if (stored) {
+                            letters = JSON.parse(stored);
+                        } else {
+                            letters = [];
+                        }
+                        saveLetters(); // 确保内存与存储一致（如存储为空则清空内存）
+                        renderLetterHistoryList(); // 重新渲染列表
+                        showToast('已同步存储中的信件', '🔄');
+                    } catch(e) {
+                        console.error('刷新信件失败', e);
+                        showToast('刷新失败', '❌');
+                    }
+                };
+            
                 document.getElementById('exportLettersBtn').onclick = exportLetters;
-       
                 document.getElementById('importLettersBtn').onclick = importLetters;
-
-                document.body.appendChild(modal);
-                
+            
                 const render = () => {
                     const c = document.getElementById('historyListModal');
                     if (!c) return;
@@ -10669,8 +10715,8 @@
                         return;
                     }
                     c.innerHTML = '';
-                        const sortedLetters = [...letters].sort((a, b) => b.sendTime - a.sendTime);
-                        sortedLetters.forEach(l => {
+                    const sortedLetters = [...letters].sort((a, b) => b.sendTime - a.sendTime);
+                    sortedLetters.forEach(l => {
                         const card = document.createElement('div');
                         card.className = 'letter-card';
                         card.style.position = 'relative';
@@ -10718,7 +10764,7 @@
                             <div style="margin:12px 0 0 0; color:var(--text-primary); white-space: pre-wrap;">${escapeHtml(previewText)}</div>
                             <div class="button-group" style="margin-top:12px;">
                                 <button class="small-btn" data-view-id="${l.id}">详情</button>
-                                <button class="small-btn danger" data-del-id="${l.id}">️删除</button>
+                                <button class="small-btn danger" data-del-id="${l.id}">删除</button>
                             </div>
                         `;
                         c.appendChild(card);
@@ -10738,6 +10784,55 @@
                 };
                 render();
                 document.getElementById('closeHistoryModal').onclick = () => modal.remove();
+            }
+            
+            // 辅助函数：渲染信件历史列表（用于刷新后重新渲染）
+            function renderLetterHistoryList() {
+                const container = document.getElementById('historyListModal');
+                if (!container) return;
+                if (!letters.length) {
+                    container.innerHTML = '<div class="data-note" style="text-align:center;padding:20px;">暂无信件</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                const sortedLetters = [...letters].sort((a, b) => b.sendTime - a.sendTime);
+                sortedLetters.forEach(l => {
+                    // 此处复用上面 render 函数中的卡片生成逻辑，为保持简洁，可复用同一段代码
+                    // 实际项目中建议抽取为独立函数 buildLetterCard(l)
+                    const card = document.createElement('div');
+                    card.className = 'letter-card';
+                    card.style.position = 'relative';
+                    const isIncoming = l.isIncoming === true;
+                    let targetTag = isIncoming ? l.fromName : (l.targetMemberId ? (groupMembers.find(m => m.id === l.targetMemberId)?.name || 'ta') : (profile.mengNick || 'ta'));
+                    const isCompleted = l.status === 'completed';
+                    let rightBadge = '';
+                    if (isCompleted && !isIncoming) rightBadge = `<span class="letter-replied-badge"><i class="fa-regular fa-envelope"></i> 已回信</span>`;
+                    else if (isCompleted && isIncoming) rightBadge = `<span class="letter-replied-badge" style="background:#e6b42220;color:#e6b422;"><i class="fa-regular fa-envelope"></i> 对方来信</span>`;
+                    else if (!isCompleted && !isIncoming) {
+                        const remainMs = l.dueTime - Date.now();
+                        const percent = Math.min(100, Math.max(0, ((Date.now() - l.sendTime) / (l.dueTime - l.sendTime)) * 100));
+                        rightBadge = `<div class="letter-progress"><div class="progress-ring" style="--percent: ${percent}"></div><span>预计 ${(remainMs / 3600000).toFixed(1)}h后回信</span></div>`;
+                    }
+                    let previewText = "";
+                    if (l.textContent) previewText = l.textContent.length > 40 ? l.textContent.substring(0, 40) + "…" : l.textContent;
+                    else if (l.sentences && l.sentences.length) previewText = l.sentences.slice(0, 2).join('；') + (l.sentences.length > 2 ? '…' : '');
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div><strong><i class="fa-regular fa-envelope"></i> ${isIncoming ? '来自' : '致'} ${escapeHtml(targetTag)}</strong><div style="font-size:12px; color:var(--text-secondary); margin-top:4px;">${new Date(l.sendTime).toLocaleString()}</div></div>
+                            ${rightBadge}
+                        </div>
+                        <div style="margin:12px 0 0 0; color:var(--text-primary); white-space: pre-wrap;">${escapeHtml(previewText)}</div>
+                        <div class="button-group" style="margin-top:12px;"><button class="small-btn" data-view-id="${l.id}">详情</button><button class="small-btn danger" data-del-id="${l.id}">删除</button></div>
+                    `;
+                    container.appendChild(card);
+                });
+                container.querySelectorAll('[data-view-id]').forEach(b => b.addEventListener('click', () => {
+                    const letter = letters.find(l => l.id == b.dataset.viewId);
+                    if (letter) showLetterDetail(letter);
+                }));
+                container.querySelectorAll('[data-del-id]').forEach(b => b.addEventListener('click', () => {
+                    if (confirm('删除这封信？')) deleteLetter(b.dataset.delId);
+                }));
             }
 
             function exportLetters() {
@@ -12167,7 +12262,16 @@
                 const letterText = letter.textContent || (letter.sentences ? letter.sentences.join('\n') : "");
                 letter.replyMessages = generateReplyMessages(targetMember, letterText);
                 letter.replyTime = Date.now();
-                saveLetters();          
+                
+                // 关键修改：只有保存成功才继续，否则回滚状态
+                const saved = saveLetters();
+                if (!saved) {
+                    letter.status = 'pending';
+                    letter.replyMessages = null;
+                    letter.replyTime = null;
+                    return;
+                }
+                
                 if (notificationEnabled && "Notification" in window && Notification.permission === "granted") { 
                     const senderName = targetMember ? targetMember.name : (profile.mengNick || 'ta'); 
                     const replyCount = letter.replyMessages?.length || 0; 
@@ -12180,7 +12284,8 @@
                 } catch(e) {
                     console.error('显示回信通知失败', e);
                 }
-                checkPuzzleConditions(); }
+                checkPuzzleConditions();
+            }
             async function processAllPendingLetters() { for (let l of letters) { if (l.status === 'pending' && Date.now() >= l
                         .dueTime) await processLetterReply(l); }
                 saveLetters(); }
